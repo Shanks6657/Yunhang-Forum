@@ -38,4 +38,13 @@ public class UserSession {
     public boolean isLoggedIn() {
         return currentUser != null;
     }
+
+    // 与类图命名对齐的别名
+    public void login(User user) {
+        startSession(user);
+    }
+
+    public void logout() {
+        clearSession();
+    }
 }

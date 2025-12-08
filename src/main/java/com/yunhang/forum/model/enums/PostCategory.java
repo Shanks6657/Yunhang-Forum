@@ -50,4 +50,9 @@ public enum PostCategory {
   public String getDisplayText() {
     return icon + " " + categoryName;
   }
+
+  // 与类图命名对齐
+  public String getDisplayName() {
+    return getDisplayText();
+  }
 }

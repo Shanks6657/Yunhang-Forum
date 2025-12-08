@@ -38,4 +38,13 @@ public class Admin extends User {
         }
         return GlobalVariables.reportMap;
     }
+
+    // 与类图对齐的便捷重载
+    public void deletePost(String postId) {
+        deletePost(postId, "");
+    }
+
+    public void banUser(String userId) {
+        banUser(userId, 0);
+    }
 }

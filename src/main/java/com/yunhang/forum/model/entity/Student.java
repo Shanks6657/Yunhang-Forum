@@ -30,4 +30,9 @@ public class Student extends User {
             System.out.println("举报失败，请重新尝试");
         }
     }
+
+    // 与类图对齐：新增 like(postId)
+    public void like(String postId) {
+        this.upvote(postId);
+    }
 }

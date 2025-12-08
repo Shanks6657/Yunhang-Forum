@@ -617,6 +617,30 @@ public class Post extends ObservableEntity {
     notifyObservers(event);
   }
 
+  // 与类图对齐：按 Comment 入参的重载
+  public void addComment(Comment comment) {
+    if (comment == null) {
+      return;
+    }
+    User commenter = GlobalVariables.userMap.get(comment.getAuthorId());
+    if (commenter == null) {
+      this.comments.add(comment);
+      incrementCommentCount();
+      return;
+    }
+    addComment(commenter, comment.getContent());
+  }
+
+  // 与类图的作者关联：提供便捷访问
+  public User getAuthor() {
+    return this.authorId != null ? GlobalVariables.userMap.get(this.authorId) : null;
+  }
+
+  // 兼容：提供一个与类图语义一致的无返回版本（不改变现有行为）
+  public void publishVoid() {
+    publish();
+  }
+
   public List<Comment> getComments() { return new ArrayList<>(comments); }
 
   @Override

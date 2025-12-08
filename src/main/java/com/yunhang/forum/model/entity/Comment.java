@@ -51,4 +51,18 @@ public class Comment extends ObservableEntity {
         // 通知已订阅该评论的观察者
         notifyObservers(event);
     }
+
+    /**
+     * 便捷重载：仅提供内容，默认以当前登录用户作为回复者。
+     */
+    public void reply(String content) {
+        com.yunhang.forum.model.session.UserSession session = com.yunhang.forum.model.session.UserSession.getInstance();
+        User replier = session.getCurrentUser();
+        if (replier == null) {
+            // 无登录态则仅追加数据，不发通知
+            replies.add(new Comment(this.postId, this.authorId, this.commentId, content));
+            return;
+        }
+        reply(replier, content);
+    }
 }

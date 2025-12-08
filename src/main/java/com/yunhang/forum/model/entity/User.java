@@ -103,8 +103,15 @@ public abstract class User {
 
     public String getNickname() { return nickname; }
     public String getStudentID() { return studentID; }
-    // 新增：获取用户唯一ID
+    // 新增：与类图一致的命名别名
+    public String getUserId() { return userID; }
     public String getUserID() { return userID; }
+
+    // 新增：Profile 更新接口（类图要求）
+    public void updateProfile(String nick, String avatar) {
+        this.nickname = nick;
+        this.avatarPath = avatar;
+    }
 
     // 新增：通知相关 API
     /**
