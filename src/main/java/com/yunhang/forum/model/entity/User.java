@@ -22,6 +22,8 @@ public abstract class User {
     private final int ITERATIONS = 50; // 迭代次数
     private static final int KEY_LENGTH = 256; // 派生密钥长度
     protected List<Post> myPosts = new ArrayList<>();
+    // 新增：用户通知列表
+    private final List<com.yunhang.forum.model.entity.Notification> notifications = new ArrayList<>();
 
     public User(String studentID, String nickname, String Password) {
         this.userID = UUID.randomUUID().toString();
@@ -101,4 +103,22 @@ public abstract class User {
 
     public String getNickname() { return nickname; }
     public String getStudentID() { return studentID; }
+    // 新增：获取用户唯一ID
+    public String getUserID() { return userID; }
+
+    // 新增：通知相关 API
+    /**
+     * 为当前用户添加一条通知。
+     * 关键逻辑：由可观察实体在事件触发时调用。
+     */
+    public void addNotification(com.yunhang.forum.model.entity.Notification notification) {
+        if (notification != null) {
+            notifications.add(notification);
+        }
+    }
+
+    /** 获取用户的全部通知（快照拷贝）。 */
+    public List<com.yunhang.forum.model.entity.Notification> getNotifications() {
+        return new ArrayList<>(notifications);
+    }
 }

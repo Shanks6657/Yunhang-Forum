@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * 帖子实体类 - 论坛内容的核心载体
  */
-public class Post {
+public class Post extends ObservableEntity {
   // 核心属性
   private String postId;
   private String title;
@@ -27,6 +27,8 @@ public class Post {
   private boolean isAnonymous;
   private boolean isSensitive;
   private boolean isForceDeleted;
+  // 新增：评论存储
+  private final List<Comment> comments = new ArrayList<>();
 
   // 常量定义
   private static final double HOT_SCORE_VIEW_WEIGHT = 0.3;
@@ -585,6 +587,37 @@ public class Post {
     }
     return postId.substring(0, 8) + "...";
   }
+
+  // 新增：评论逻辑与观察者通知
+  /**
+   * 向帖子添加一条评论，并自动通知观察者（尤其是作者）。
+   * 关键逻辑：
+   * 1) 存储评论；2) 递增评论计数；3) 构造事件；4) 通知观察者。
+   */
+  public void addComment(User commenter, String content) {
+    if (!isCommentable()) {
+      return;
+    }
+    Comment comment = new Comment(this.postId, commenter.getStudentID(), null, content);
+    this.comments.add(comment);
+    incrementCommentCount();
+
+    // 确保作者在观察者列表中
+    User author = GlobalVariables.userMap.get(this.authorId);
+    if (author != null) {
+      this.addObserver(author);
+    }
+
+    // 创建并分发事件
+    Event event = new Event(
+        EventType.COMMENT_CREATED,
+        commenter,
+        String.format("%s 评论了你的帖子《%s》：%s", commenter.getNickname(), this.title, content)
+    );
+    notifyObservers(event);
+  }
+
+  public List<Comment> getComments() { return new ArrayList<>(comments); }
 
   @Override
   public String toString() {
