@@ -38,6 +38,10 @@ public class UserSession {
     public boolean isLoggedIn() {
         return currentUser != null;
     }
+    public void endSession() {
+        this.currentUser = null;
+        System.out.println("已退出登录");
+    }
 
     // 与类图命名对齐的别名
     public void login(User user) {
