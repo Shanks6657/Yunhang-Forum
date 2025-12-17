@@ -9,10 +9,39 @@ import java.time.format.DateTimeFormatter;
  */
 public class DateUtil {
 
-    private static final DateTimeFormatter DATE_FORMATTER =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter DATE_TIME_SECONDS_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter DATE_ONLY_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER =
         DateTimeFormatter.ofPattern("HH:mm");
+
+    /**
+     * 返回当前时间的标准格式字符串。
+     */
+    public static String now() {
+        return LocalDateTime.now().format(DATE_TIME_SECONDS_FORMATTER);
+    }
+
+    /**
+     * 格式化时间（精确到秒）。
+     */
+    public static String format(LocalDateTime time) {
+        if (time == null) {
+            return "";
+        }
+        return time.format(DATE_TIME_SECONDS_FORMATTER);
+    }
+
+    /**
+     * 解析标准时间字符串（yyyy-MM-dd HH:mm:ss）。
+     */
+    public static LocalDateTime parse(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        return LocalDateTime.parse(text.trim(), DATE_TIME_SECONDS_FORMATTER);
+    }
 
     /**
      * 获取相对时间描述（例如："2小时前"）
@@ -31,15 +60,21 @@ public class DateUtil {
 
         if (minutes < 1) {
             return "刚刚";
-        } else if (minutes < 60) {
-            return minutes + "分钟前";
-        } else if (hours < 24) {
-            return hours + "小时前";
-        } else if (days < 7) {
-            return days + "天前";
-        } else {
-            return time.format(DATE_FORMATTER);
         }
+        if (minutes < 60) {
+            return minutes + " 分钟前";
+        }
+        if (hours < 24) {
+            return hours + " 小时前";
+        }
+
+        // 昨天：显示“昨天 HH:mm”
+        if (time.toLocalDate().equals(now.toLocalDate().minusDays(1))) {
+            return "昨天 " + time.format(TIME_FORMATTER);
+        }
+
+        // 其他：显示日期
+        return time.toLocalDate().format(DATE_ONLY_FORMATTER);
     }
 
     /**
@@ -49,7 +84,7 @@ public class DateUtil {
         if (time == null) {
             return "";
         }
-        return time.format(DATE_FORMATTER);
+        return time.format(DATE_TIME_SECONDS_FORMATTER);
     }
 
     /**

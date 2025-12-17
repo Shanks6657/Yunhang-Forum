@@ -37,15 +37,15 @@ public class PostListController {
 
     // 加载帖子数据
     loadPosts();
-
-    // 设置刷新按钮事件
-    refreshButton.setOnAction(event -> refreshPosts());
   }
 
   /**
    * 配置ListView
    */
   private void configureListView() {
+    // 增量添加样式类，避免覆盖控件默认 styleClass
+    postListView.getStyleClass().add("post-list-view");
+
     // 设置Cell Factory
     postListView.setCellFactory(new Callback<>() {
       @Override
@@ -91,10 +91,6 @@ public class PostListController {
         };
       }
     });
-
-    // 设置ListView的样式
-    postListView.setStyle("-fx-background-color: transparent;");
-    postListView.setPrefHeight(600);
   }
 
   /**

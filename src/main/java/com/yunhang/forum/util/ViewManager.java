@@ -37,7 +37,9 @@ public final class ViewManager {
 
     // 辅助方法：统一资源查找和错误处理
     private static Parent loadFxmlResource(String fxmlPath) throws IOException {
-        String fullPath = FXML_PATH_PREFIX + fxmlPath;
+        Objects.requireNonNull(fxmlPath, "fxmlPath");
+
+        String fullPath = normalizeFxmlPath(fxmlPath);
         URL resourceUrl = ViewManager.class.getResource(fullPath);
 
         if (resourceUrl == null) {
@@ -46,6 +48,23 @@ public final class ViewManager {
         }
 
         return FXMLLoader.load(resourceUrl);
+    }
+
+    /**
+     * 将传入的 fxmlPath 规范化为可被 ClassLoader 解析的绝对路径。
+     *
+     * <p>支持两种写法：</p>
+     * <ul>
+     *   <li>相对路径：auth/Login.fxml（会自动拼接 FXML_PATH_PREFIX）</li>
+     *   <li>绝对路径：/com/yunhang/forum/fxml/auth/Login.fxml（不会重复拼接）</li>
+     * </ul>
+     */
+    private static String normalizeFxmlPath(String fxmlPath) {
+        String trimmed = fxmlPath.trim();
+        if (trimmed.startsWith("/")) {
+            return trimmed;
+        }
+        return FXML_PATH_PREFIX + trimmed;
     }
 
     // 辅助方法：统一 CSS 查找

@@ -14,11 +14,17 @@ public class LoginController {
     @FXML private Label messageLabel;
 
     // 依赖服务层
-    private UserService userService = new UserService();
+    private final UserService userService = new UserService();
 
     @FXML
     protected void initialize() {
         // 可以在这里进行初始化工作，例如设置默认值
+    }
+
+    private void setMessage(String text, boolean success) {
+        messageLabel.setText(text);
+        messageLabel.getStyleClass().removeAll("error", "success");
+        messageLabel.getStyleClass().add(success ? "success" : "error");
     }
 
     @FXML
@@ -28,19 +34,17 @@ public class LoginController {
 
         // 基础输入验证
         if (studentId.isEmpty() || password.isEmpty()) {
-            messageLabel.setText("学号和密码不能为空哦😖");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("学号和密码不能为空", false);
             return;
         }
 
         if (userService.login(studentId, password)) {
-            messageLabel.setText("登录成功😋");
-            messageLabel.setStyle("-fx-text-fill: black;");
+            messageLabel.getStyleClass().removeAll("error", "success");
+            messageLabel.setText("登录成功");
             ViewManager.switchScene("auth/UserProfile.fxml");
 
         } else {
-            messageLabel.setText("学号或密码错误☹️");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("学号或密码错误", false);
         }
     }
 

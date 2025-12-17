@@ -5,6 +5,7 @@ import com.yunhang.forum.util.ViewManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
+import javafx.concurrent.Task;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -27,6 +28,12 @@ public class RegisterController {
     private int secondsRemaining = 60;
     private static final String REQUIRED_SUFFIX = "@buaa.edu.cn";
 
+    private void setMessage(String text, boolean success) {
+        messageLabel.setText(text);
+        messageLabel.getStyleClass().removeAll("error", "success");
+        messageLabel.getStyleClass().add(success ? "success" : "error");
+    }
+
     @FXML
     protected void initialize() {
         // 初始化
@@ -37,21 +44,45 @@ public class RegisterController {
         String emailPrefix = emailPrefixField.getText().trim();
 
         if (emailPrefix.isEmpty()) {
-            messageLabel.setText("邮箱前缀不能为空😌");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("邮箱前缀不能为空", false);
             return;
         }
 
         String email = emailPrefix + REQUIRED_SUFFIX;
 
-        if (userService.sendVerificationCode(email)) {
-            messageLabel.setText("验证码已发送到 " + email + ",请查收😝");
-            messageLabel.setStyle("-fx-text-fill: green;");
-            startCountdown();
-        } else {
-            messageLabel.setText("验证码发送失败，请稍后再试🫣");
-            messageLabel.setStyle("-fx-text-fill: red;");
-        }
+        // 网络 I/O：放到后台线程，避免阻塞 UI
+        sendCodeButton.setDisable(true);
+        sendCodeButton.setText("发送中...");
+        setMessage("正在发送验证码...", true);
+
+        Task<Boolean> sendTask = new Task<>() {
+            @Override
+            protected Boolean call() {
+                return userService.sendVerificationCode(email);
+            }
+        };
+
+        sendTask.setOnSucceeded(event -> {
+            Boolean ok = sendTask.getValue();
+            if (Boolean.TRUE.equals(ok)) {
+                setMessage("验证码已发送到 " + email + "，请查收", true);
+                startCountdown();
+            } else {
+                setMessage("验证码发送失败，请稍后再试", false);
+                sendCodeButton.setDisable(false);
+                sendCodeButton.setText("发送验证码");
+            }
+        });
+
+        sendTask.setOnFailed(event -> {
+            setMessage("验证码发送失败，请稍后再试", false);
+            sendCodeButton.setDisable(false);
+            sendCodeButton.setText("发送验证码");
+        });
+
+        Thread thread = new Thread(sendTask, "send-verification-code");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void startCountdown() {
@@ -95,40 +126,34 @@ public class RegisterController {
 
         // 1. 客户端输入校验
         if (studentId.isEmpty() || nickname.isEmpty() || emailPrefix.isEmpty() || verificationCode.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            messageLabel.setText("所有字段都不能为空😒");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("所有字段都不能为空", false);
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            messageLabel.setText("两次输入的密码不一致😕");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("两次输入的密码不一致", false);
             return;
         }
 
         // 2. 验证码校验
         if (!userService.isVerificationCodeValid(email, verificationCode)) {
-            messageLabel.setText("验证码错误或已过期🙃");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("验证码错误或已过期", false);
             return;
         }
 
         // 3. 学号唯一性校验
         if (userService.isStudentIdExists(studentId)) {
-            messageLabel.setText("该学号已被注册🤨");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("该学号已被注册", false);
             return;
         }
 
         // 4. 调用业务逻辑
         if (userService.registerStudent(studentId, nickname, password)) {
-            messageLabel.setText("注册成功,正在跳转到登录页...😇");
-            messageLabel.setStyle("-fx-text-fill: green;");
+            setMessage("注册成功，正在跳转到登录页...", true);
             stopCountdown();
             handleBackToLoginAction();
         } else {
-            messageLabel.setText("注册失败,请检查输入🥹");
-            messageLabel.setStyle("-fx-text-fill: red;");
+            setMessage("注册失败，请检查输入", false);
         }
     }
 

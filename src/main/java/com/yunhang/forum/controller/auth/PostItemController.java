@@ -4,11 +4,15 @@ import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.enums.PostCategory;
 import com.yunhang.forum.util.DateUtil;
 import javafx.fxml.FXML;
+import javafx.scene.image.PixelWriter;
 import javafx.scene.control.Label;
+import javafx.scene.image.WritableImage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 
 /**
  * 帖子卡片控制器 - 控制单个帖子卡片的显示
@@ -48,8 +52,7 @@ public class PostItemController {
   @FXML
   private HBox tagContainer;
 
-  // 默认头像
-  private static final String DEFAULT_AVATAR = "/com/yunhang/forum/images/default-avatar.png";
+  private static final int AVATAR_SIZE = 50;
 
   /**
    * 初始化方法
@@ -57,16 +60,20 @@ public class PostItemController {
   @FXML
   public void initialize() {
     // 设置头像为圆形
-    avatarImageView.setClip(new javafx.scene.shape.Circle(25, 25, 25));
+    avatarImageView.setClip(new Circle(AVATAR_SIZE / 2.0, AVATAR_SIZE / 2.0, AVATAR_SIZE / 2.0));
+    avatarImageView.setImage(createPlaceholderAvatar(AVATAR_SIZE));
+  }
 
-    // 加载默认头像
-    try {
-      Image defaultAvatar = new Image(getClass().getResourceAsStream(DEFAULT_AVATAR));
-      avatarImageView.setImage(defaultAvatar);
-    } catch (Exception e) {
-      // 如果找不到默认头像，使用占位符
-      System.err.println("无法加载默认头像: " + DEFAULT_AVATAR);
+  private static Image createPlaceholderAvatar(int size) {
+    WritableImage image = new WritableImage(size, size);
+    PixelWriter writer = image.getPixelWriter();
+    Color color = Color.web("#CCCCCC");
+    for (int y = 0; y < size; y++) {
+      for (int x = 0; x < size; x++) {
+        writer.setColor(x, y, color);
+      }
     }
+    return image;
   }
 
   /**
@@ -167,24 +174,7 @@ public class PostItemController {
    * 设置作者头像
    */
   private void setAuthorAvatar(String authorId, boolean isAnonymous) {
-    if (isAnonymous) {
-      // 匿名帖子使用默认头像
-      return;
-    }
-
-    // 在实际项目中，这里应该根据authorId加载对应的头像
-    // 这里简化处理，使用默认头像
-    try {
-      String avatarPath = String.format("/com/yunhang/forum/images/avatars/%s.png",
-          authorId.substring(0, Math.min(8, authorId.length())));
-
-      Image avatar = new Image(getClass().getResourceAsStream(avatarPath));
-      if (avatar != null && !avatar.isError()) {
-        avatarImageView.setImage(avatar);
-      }
-    } catch (Exception e) {
-      // 如果找不到用户头像，继续使用默认头像
-    }
+    // Phase 2：暂无用户头像资源，统一使用占位图即可
   }
 
   /**

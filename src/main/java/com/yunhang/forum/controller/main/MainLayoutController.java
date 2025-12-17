@@ -62,29 +62,27 @@ public class MainLayoutController implements Initializable {
   @FXML
   public void onHomeClicked() {
     System.out.println("导航: 点击首页 (Home)");
-    // Task 要求路径
-    ViewManager.loadContent("/com/yunhang/forum/fxml/post/PostList.fxml");
+    // 使用 ViewManager 的相对路径（避免重复拼接 /com/yunhang/forum/fxml/ 前缀）
+    ViewManager.loadContent("auth/PostList.fxml");
   }
 
   @FXML
   public void onSquareClicked() {
     System.out.println("导航: 点击广场 (Square)");
     // 广场内容，暂时与首页相同
-    ViewManager.loadContent("/com/yunhang/forum/fxml/post/PostList.fxml");
+    ViewManager.loadContent("auth/PostList.fxml");
   }
 
   @FXML
   public void onMyPostsClicked() {
     System.out.println("导航: 点击我的帖子 (My Posts)");
-    // Task 要求加载过滤后的列表
-    // 假设路径为 MyPostList.fxml
-    ViewManager.loadContent("/com/yunhang/forum/fxml/post/MyPostList.fxml");
+    // Phase 2：复用用户中心页，展示“我的帖子”列表
+    ViewManager.loadContent("auth/UserProfile.fxml");
   }
 
   @FXML
   public void onSettingsClicked() {
     System.out.println("导航: 点击设置 (Settings)");
-    // 假设路径为 Settings.fxml
-    ViewManager.loadContent("/com/yunhang/forum/fxml/user/Settings.fxml");
+    ViewManager.loadContent("user/Settings.fxml");
   }
 }

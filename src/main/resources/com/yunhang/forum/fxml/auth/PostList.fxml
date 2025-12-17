@@ -10,8 +10,8 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.yunhang.forum.controller.auth.PostListController">
   <top>
-    <HBox alignment="CENTER_RIGHT" style="-fx-background-color: #f8f9fa; -fx-padding: 10;">
-      <Button fx:id="refreshButton" mnemonicParsing="false" text="刷新" style="-fx-background-color: #005be4; -fx-text-fill: white; -fx-font-weight: bold;">
+    <HBox alignment="CENTER_RIGHT" style="-fx-padding: 10;">
+      <Button fx:id="refreshButton" mnemonicParsing="false" text="刷新" onAction="#refreshPosts" styleClass="button">
         <HBox.margin>
           <Insets right="10.0" />
         </HBox.margin>
@@ -20,9 +20,9 @@
   </top>
 
   <center>
-    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+    <ScrollPane fitToWidth="true">
       <VBox spacing="0.0">
-        <ListView fx:id="postListView" style="-fx-background-color: transparent;" />
+        <ListView fx:id="postListView" />
       </VBox>
     </ScrollPane>
   </center>

@@ -51,15 +51,15 @@ public class PostDetailController {
 
     private VBox buildCommentNode(Comment c) {
         Label author = new Label("@" + c.getAuthorId());
-        author.setStyle("-fx-text-fill: #333; -fx-font-weight: bold;");
+        author.getStyleClass().add("comment-author");
         Label content = new Label(c.getContent());
         content.setWrapText(true);
         Label time = new Label(c.getTime().format(TIME_FMT));
-        time.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
+        time.getStyleClass().add("comment-time");
 
         VBox container = new VBox(2);
         container.getChildren().addAll(author, content, time);
-        container.setStyle("-fx-background-color: #f7f9fc; -fx-padding: 8; -fx-background-radius: 6;");
+        container.getStyleClass().add("comment-container");
         return container;
     }
 
@@ -68,7 +68,7 @@ public class PostDetailController {
         if (currentPost == null) return;
         String text = commentInput.getText();
         if (text == null || text.trim().isEmpty()) {
-            commentInput.setStyle("-fx-border-color: #ff4d4f;");
+            commentInput.setStyle("-fx-border-color: -fx-error-color;");
             return;
         }
         commentInput.setStyle("");
@@ -86,7 +86,7 @@ public class PostDetailController {
             commentsContainer.getChildren().add(buildCommentNode(newComment));
         } else {
             // 失败提示样式（可换成对话框）
-            commentInput.setStyle("-fx-border-color: #ff4d4f;");
+            commentInput.setStyle("-fx-border-color: -fx-error-color;");
         }
     }
 }
