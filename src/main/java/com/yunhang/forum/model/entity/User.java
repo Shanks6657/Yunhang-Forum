@@ -106,7 +106,6 @@ public abstract class User {
     // 新增：与类图一致的命名别名
     public String getUserId() { return userID; }
     public String getUserID() { return userID; }
-
     // 新增：Profile 更新接口（类图要求）
     public void updateProfile(String nick, String avatar) {
         this.nickname = nick;

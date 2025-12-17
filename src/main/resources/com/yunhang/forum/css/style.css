@@ -1,45 +1,116 @@
-/* Global CSS for Yunhang Forum */
 .root {
-  -fx-primary-color: #005be4;
-  -fx-bg-color: #ffffff;
+    -fx-primary-dark: #0F4C75;
+    -fx-primary-light: #3282B8;
+    -fx-bg-light: #F5F5F5;
+    -fx-bg-white: #FFFFFF;
+    -fx-text-color: #333333;
+    -fx-border-default: #CCCCCC;
+    -fx-error-color: #D32F2F;
+    -fx-success-color: #388E3C;
+
+    -fx-font-family: "Arial", "Microsoft YaHei", sans-serif;
+    -fx-background-color: -fx-bg-light;
+    -fx-font-size: 14px;
 }
 
-/* Buttons: flat, 4px radius, primary background, white text */
+.vbox.auth-container {
+    -fx-background-color: -fx-bg-white;
+    -fx-padding: 30px;
+    -fx-spacing: 15px;
+    -fx-alignment: center;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 15, 0.5, 0, 5);
+}
+
 .button {
-  -fx-background-color: -fx-primary-color;
-  -fx-text-fill: white;
-  -fx-background-radius: 4;
-  -fx-padding: 8 14;
-  -fx-border-color: transparent;
-  -fx-border-radius: 4;
+    -fx-background-color: -fx-primary-dark;
+    -fx-text-fill: -fx-bg-white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-padding: 8 18;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-pref-height: 40px;
 }
+
 .button:hover {
-  -fx-opacity: 0.92;
+    -fx-background-color: -fx-primary-light;
 }
+
 .button:pressed {
-  -fx-opacity: 0.85;
+    -fx-background-color: -fx-primary-dark;
+    -fx-opacity: 0.9;
 }
 
-/* TextField: underline or rounded border; focus turns blue */
-.text-field {
-  -fx-background-color: -fx-bg-color;
-  -fx-background-insets: 0;
-  -fx-padding: 6 8;
-  -fx-border-color: #cccccc;
-  -fx-border-width: 0 0 1 0; /* underline-style */
-  -fx-border-radius: 0;
-}
-.text-field:focused {
-  -fx-border-color: -fx-primary-color;
+.link-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333333;
+    -fx-font-size: 13px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
 }
 
-/* Alternate rounded style (apply via style class) */
-.text-field.rounded {
-  -fx-border-width: 1;
-  -fx-border-radius: 4;
-  -fx-background-radius: 4;
+.link-button:hover {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-text-fill: #0077c9;
+    -fx-underline: true;
 }
-.text-field.rounded:focused {
-  -fx-border-color: -fx-primary-color;
+
+.link-button:pressed {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-text-fill: #0056b3;
+}
+
+.text-field, .password-field {
+    -fx-background-color: -fx-bg-white;
+    -fx-background-insets: 0;
+    -fx-padding: 8 12;
+    -fx-border-color: -fx-border-default;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-prompt-text-fill: #999999;
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: -fx-primary-dark;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(15, 76, 117, 0.2), 5, 0.0, 0, 0);
+}
+
+.text-field.underline {
+    -fx-border-width: 0 0 1 0;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+}
+.text-field.underline:focused {
+    -fx-border-width: 0 0 2 0;
+}
+
+.label-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-primary-dark;
+    -fx-padding: 0 0 15px 0;
+}
+
+.label-message {
+    -fx-font-size: 13px;
+    -fx-text-fill: -fx-text-color;
+    -fx-padding: 5px 0;
+}
+
+.label-message.error {
+    -fx-text-fill: -fx-error-color;
+}
+
+.label-message.success {
+    -fx-text-fill: -fx-success-color;
 }
 

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.yunhang.forum.controller.auth.RegisterController"
+           style="-fx-background-color: -fx-bg-light;">
+
+    <VBox spacing="15" alignment="CENTER"
+          maxWidth="420"
+          styleClass="auth-container">
+
+        <children>
+            <Label text="创建新账号" styleClass="label-title"
+                   alignment="CENTER"/>
+
+            <Label fx:id="messageLabel" styleClass="label-message"/>
+
+            <TextField fx:id="studentIdField" promptText="学号 (例如：24373309)" prefHeight="45"/>
+
+            <TextField fx:id="nicknameField" promptText="昵称" prefHeight="45"/>
+
+            <HBox spacing="0" alignment="CENTER_LEFT" prefHeight="45"
+                  style="-fx-border-color: -fx-border-default;
+                         -fx-border-width: 1;
+                         -fx-border-radius: 8;
+                         -fx-background-color: white;"> <TextField fx:id="emailPrefixField" promptText="邮箱前缀"
+                                                                   prefHeight="45" HBox.hgrow="ALWAYS"
+                                                                   style="-fx-background-color: transparent;
+                                  -fx-border-width: 0 1 0 0;"/> <Label style="-fx-font-size: 14px;
+                              -fx-padding: 0 12;
+                              -fx-text-fill: gray;">
+                @buaa.edu.cn
+            </Label>
+            </HBox>
+
+            <HBox spacing="10" alignment="CENTER_LEFT" prefHeight="45">
+                <TextField fx:id="verificationCodeField" promptText="输入验证码" prefHeight="45" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="sendCodeButton" text="发送验证码" onAction="#handleSendCodeAction"
+                        styleClass="button-secondary" prefHeight="45" maxWidth="120"/>
+            </HBox>
+
+            <PasswordField fx:id="passwordField" promptText="设置密码" prefHeight="45"/>
+
+            <PasswordField fx:id="confirmPasswordField" promptText="确认密码" prefHeight="45"/>
+
+            <Button text="立即注册" onAction="#handleRegisterButtonAction"
+                    styleClass="button" prefWidth="320"/>
+
+            <HBox alignment="CENTER" spacing="10">
+                <Label text="已有账号?" style="-fx-font-size: 13px; -fx-text-fill: -fx-text-color;"/>
+                <Button text="返回登录" onAction="#handleBackToLoginAction"
+                        styleClass="link-button"/>
+            </HBox>
+
+        </children>
+
+        <padding>
+            <Insets topRightBottomLeft="40"/>
+        </padding>
+
+    </VBox>
+
+</StackPane>
