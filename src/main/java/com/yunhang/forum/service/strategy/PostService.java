@@ -3,6 +3,8 @@ package com.yunhang.forum.service.strategy;
 import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.entity.Comment;
 import com.yunhang.forum.model.entity.Student;
+import com.yunhang.forum.model.entity.User;
+import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.model.enums.PostCategory;
 import com.yunhang.forum.model.enums.PostStatus;
 
@@ -18,12 +20,22 @@ public class PostService {
 
   private static PostService instance;
 
+  /**
+   * 简化：在内存中维护帖子列表，保证点赞/评论能按 postId 找到并更新。
+   * （后续如接入 DataLoader，可在这里替换为持久化实现）
+   */
+  private final List<Post> cachedPosts = new ArrayList<>();
+  private boolean initialized = false;
+
   // 【新增】维护当前的排序策略，默认为按时间排序
   private PostSortStrategy sortStrategy =
       posts -> posts.sort(Comparator.comparing(Post::getPublishTime).reversed());
 
   private PostService() {
     // 私有构造方法，单例模式
+  }
+
+  public record LikeResult(boolean liked, int likeCount) {
   }
 
   public static PostService getInstance() {
@@ -53,38 +65,100 @@ public class PostService {
    * 获取所有帖子（模拟数据）
    */
   public List<Post> getAllPosts() {
-    List<Post> posts = new ArrayList<>();
+    ensureInitialized();
 
-    // 模拟一些帖子数据
-    posts.add(createPost("Java多线程学习心得", "最近在学习Java多线程编程，分享一些心得体会...",
+    // 返回前按当前策略排序（直接排序缓存列表，使 UI 侧引用保持一致）
+    if (sortStrategy != null) {
+      sortStrategy.sort(cachedPosts);
+    }
+
+    return cachedPosts;
+  }
+
+  private synchronized void ensureInitialized() {
+    if (initialized) {
+      return;
+    }
+
+    // 模拟一些帖子数据（仅初始化一次，保证点赞/评论不会因重新加载而丢失）
+    cachedPosts.add(createPost("Java多线程学习心得", "最近在学习Java多线程编程，分享一些心得体会...",
         "student_001", PostCategory.LEARNING, 150, 45, 23, LocalDateTime.now().minusHours(2)));
 
-    posts.add(createPost("校园篮球比赛通知", "本周五下午体育馆举行篮球比赛，欢迎大家参加！",
+    cachedPosts.add(createPost("校园篮球比赛通知", "本周五下午体育馆举行篮球比赛，欢迎大家参加！",
         "sports_committee", PostCategory.CAMPUS_LIFE, 320, 120, 56,
         LocalDateTime.now().minusHours(5)));
 
-    posts.add(
+    cachedPosts.add(
         createPost("转让二手笔记本电脑", "联想ThinkPad，9成新，配置：i7/16G/512G SSD", "student_2024",
             PostCategory.SECOND_HAND, 180, 65, 12, LocalDateTime.now().minusDays(1)));
 
-    posts.add(
+    cachedPosts.add(
         createPost("周末编程学习小组招募", "寻找对Java开发感兴趣的同学一起学习交流", "tech_group",
             PostCategory.ACTIVITY, 95, 32, 18, LocalDateTime.now().minusDays(2)));
 
-    posts.add(
+    cachedPosts.add(
         createPost("关于宿舍网络的问题", "最近宿舍网络不太稳定，有相同情况的同学吗？", "student_net",
             PostCategory.QNA, 210, 78, 45, LocalDateTime.now().minusHours(10)));
 
-    posts.add(
+    cachedPosts.add(
         createPost("实习经验分享会", "本周六下午有学长学姐分享实习经验，欢迎参加", "career_center",
             PostCategory.EMPLOYMENT, 420, 200, 89, LocalDateTime.now().minusHours(1)));
 
-    // 【新增】返回前执行排序
-    if (sortStrategy != null) {
-      sortStrategy.sort(posts);
+    initialized = true;
+  }
+
+  private Post findPostById(String postId) {
+    if (postId == null || postId.isBlank()) {
+      return null;
+    }
+    ensureInitialized();
+    for (Post p : cachedPosts) {
+      if (postId.equals(p.getPostId())) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 点赞/取消点赞。
+   * @return LikeResult(切换后是否已点赞, 最新点赞数)
+   */
+  public LikeResult toggleLike(String postId, String userId) {
+    Post post = findPostById(postId);
+    if (post == null) {
+      return new LikeResult(false, 0);
+    }
+    boolean liked = post.toggleLike(userId);
+    return new LikeResult(liked, post.getLikeCount());
+  }
+
+  /**
+   * 添加评论：Controller 传入 Comment(包含内容/父评论等)，Service 负责持久化/业务处理。
+   * 返回“最终保存”的 Comment 对象（用于 UI 直接追加）。
+   */
+  public Comment addComment(String postId, Comment comment) {
+    Post post = findPostById(postId);
+    if (post == null || comment == null) {
+      return null;
     }
 
-    return posts;
+    int beforeSize = post.getComments().size();
+    User currentUser = UserSession.getInstance().getCurrentUser();
+
+    if (currentUser != null) {
+      // 使用 Post 的业务方法，确保触发通知等副作用
+      post.addComment(currentUser, comment.getContent());
+      List<Comment> after = post.getComments();
+      if (after.size() > beforeSize) {
+        return after.get(after.size() - 1);
+      }
+      return null;
+    }
+
+    // 无登录态：仅追加数据
+    post.addComment(comment);
+    return comment;
   }
 
   /**

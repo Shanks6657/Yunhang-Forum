@@ -5,7 +5,9 @@ import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.service.strategy.PostService;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
@@ -23,10 +25,19 @@ public class PostDetailController {
     @FXML private Label authorLabel;
     @FXML private Label timeLabel;
     @FXML private Label contentLabel;
+    @FXML private Label likesLabel;
     @FXML private VBox commentsContainer;
     @FXML private TextField commentInput;
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    @FXML
+    public void initialize() {
+        if (likesLabel != null) {
+            likesLabel.setOnMouseClicked(e -> onToggleLike());
+            likesLabel.setStyle(likesLabel.getStyle() + "; -fx-cursor: hand;");
+        }
+    }
 
     // 初始化数据：由列表页或路由传递进来
     public void initData(Post post) {
@@ -36,7 +47,43 @@ public class PostDetailController {
         authorLabel.setText(post.getDisplayAuthor());
         timeLabel.setText(post.getFormattedPublishTime());
         contentLabel.setText(post.getFullContent());
+        updateLikeUI();
         renderComments();
+    }
+
+    private void updateLikeUI() {
+        if (currentPost == null || likesLabel == null) {
+            return;
+        }
+        User currentUser = UserSession.getInstance().getCurrentUser();
+        boolean liked = currentUser != null && currentPost.isLikedBy(currentUser.getStudentID());
+        applyLikeUI(currentPost.getLikeCount(), liked);
+    }
+
+    private void applyLikeUI(int likeCount, boolean liked) {
+        likesLabel.setText("♥ " + likeCount);
+        String color = liked ? "#ff4757" : "#888888";
+        likesLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + color + "; -fx-cursor: hand;");
+    }
+
+    private void onToggleLike() {
+        if (currentPost == null) {
+            return;
+        }
+
+        User currentUser = UserSession.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            new Alert(Alert.AlertType.WARNING, "请先登录再点赞").showAndWait();
+            return;
+        }
+
+        String userId = currentUser.getStudentID();
+        String postId = currentPost.getPostId();
+
+        new Thread(() -> {
+            PostService.LikeResult result = PostService.getInstance().toggleLike(postId, userId);
+            Platform.runLater(() -> applyLikeUI(result.likeCount(), result.liked()));
+        }).start();
     }
 
     private void renderComments() {
@@ -68,25 +115,26 @@ public class PostDetailController {
         if (currentPost == null) return;
         String text = commentInput.getText();
         if (text == null || text.trim().isEmpty()) {
-            commentInput.setStyle("-fx-border-color: -fx-error-color;");
+            new Alert(Alert.AlertType.WARNING, "评论内容不能为空").showAndWait();
             return;
         }
-        commentInput.setStyle("");
 
-        // 获取当前用户作为评论作者
+        String content = text.trim();
         User currentUser = UserSession.getInstance().getCurrentUser();
-        String authorId = currentUser != null ? currentUser.getUserID() : "anonymous";
-        Comment newComment = new Comment(currentPost.getPostId(), authorId, null, text.trim());
+        String authorId = currentUser != null ? currentUser.getStudentID() : "anonymous";
+        Comment inputComment = new Comment(currentPost.getPostId(), authorId, null, content);
 
-        // 调用服务层添加评论（简单示例：直接更新模型并刷新UI）
-        boolean ok = PostService.getInstance().addComment(currentPost, newComment);
-        if (ok) {
-            commentInput.clear();
-            // 动态添加到 UI 末尾
-            commentsContainer.getChildren().add(buildCommentNode(newComment));
-        } else {
-            // 失败提示样式（可换成对话框）
-            commentInput.setStyle("-fx-border-color: -fx-error-color;");
-        }
+        // Service 可能涉及 IO，放到后台线程执行
+        new Thread(() -> {
+            Comment saved = PostService.getInstance().addComment(currentPost.getPostId(), inputComment);
+            Platform.runLater(() -> {
+                if (saved != null) {
+                    commentInput.clear();
+                    commentsContainer.getChildren().add(buildCommentNode(saved));
+                } else {
+                    new Alert(Alert.AlertType.ERROR, "发送失败，请稍后再试").showAndWait();
+                }
+            });
+        }).start();
     }
 }

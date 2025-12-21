@@ -24,6 +24,8 @@ public class Post extends ObservableEntity {
   private int viewCount;
   private int likeCount;
   private int commentCount;
+  // 新增：点赞用户集合（用于判断某用户是否已点赞）
+  private Set<String> likedUserIds = new HashSet<>();
   private List<PostImage> postImages;
   private boolean isAnonymous;
   private boolean isSensitive;
@@ -214,6 +216,44 @@ public class Post extends ObservableEntity {
   public void incrementLikeCount() {
     this.likeCount++;
     this.updateTime = LocalDateTime.now();
+  }
+
+  /**
+   * 判断指定用户是否已点赞。
+   */
+  public boolean isLikedBy(String userId) {
+    if (userId == null || userId.isBlank()) {
+      return false;
+    }
+    if (likedUserIds == null) {
+      likedUserIds = new HashSet<>();
+    }
+    return likedUserIds.contains(userId);
+  }
+
+  /**
+   * 切换点赞状态。
+   * @return 切换后是否为“已点赞”状态
+   */
+  public boolean toggleLike(String userId) {
+    if (userId == null || userId.isBlank()) {
+      return false;
+    }
+    if (likedUserIds == null) {
+      likedUserIds = new HashSet<>();
+    }
+
+    boolean liked;
+    if (likedUserIds.add(userId)) {
+      likeCount++;
+      liked = true;
+    } else {
+      likedUserIds.remove(userId);
+      likeCount = Math.max(0, likeCount - 1);
+      liked = false;
+    }
+    updateTime = LocalDateTime.now();
+    return liked;
   }
 
   /**

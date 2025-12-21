@@ -26,6 +26,12 @@
             <!-- Alternatively, if using rich text: -->
             <!-- <TextFlow fx:id="contentFlow" /> -->
 
+            <!-- Like -->
+            <HBox spacing="8">
+                <Label text="点赞:" style="-fx-text-fill: #666;" />
+                <Label fx:id="likesLabel" text="♥ 0" style="-fx-font-size: 12px; -fx-text-fill: #888888;" />
+            </HBox>
+
             <Separator />
 
             <!-- Comments section -->

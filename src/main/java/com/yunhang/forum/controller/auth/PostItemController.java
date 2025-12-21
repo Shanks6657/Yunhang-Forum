@@ -2,9 +2,14 @@ package com.yunhang.forum.controller.auth;
 
 import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.enums.PostCategory;
+import com.yunhang.forum.model.entity.User;
+import com.yunhang.forum.model.session.UserSession;
+import com.yunhang.forum.service.strategy.PostService;
 import com.yunhang.forum.util.DateUtil;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.image.PixelWriter;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.image.WritableImage;
 import javafx.scene.image.Image;
@@ -54,6 +59,8 @@ public class PostItemController {
 
   private static final int AVATAR_SIZE = 50;
 
+  private Post currentPost;
+
   /**
    * 初始化方法
    */
@@ -62,6 +69,12 @@ public class PostItemController {
     // 设置头像为圆形
     avatarImageView.setClip(new Circle(AVATAR_SIZE / 2.0, AVATAR_SIZE / 2.0, AVATAR_SIZE / 2.0));
     avatarImageView.setImage(createPlaceholderAvatar(AVATAR_SIZE));
+
+    // 点赞点击事件
+    if (likesLabel != null) {
+      likesLabel.setOnMouseClicked(e -> onToggleLike());
+      likesLabel.setStyle(likesLabel.getStyle() + "; -fx-cursor: hand;");
+    }
   }
 
   private static Image createPlaceholderAvatar(int size) {
@@ -84,6 +97,8 @@ public class PostItemController {
       return;
     }
 
+    this.currentPost = post;
+
     // 设置标题
     titleLabel.setText(post.getTitle());
 
@@ -102,7 +117,7 @@ public class PostItemController {
     timeLabel.setText(DateUtil.getRelativeTime(post.getPublishTime()));
 
     // 设置点赞数
-    likesLabel.setText("♥ " + post.getLikeCount());
+    updateLikeUI(post);
 
     // 设置评论数
     commentsLabel.setText("💬 " + post.getCommentCount());
@@ -175,6 +190,46 @@ public class PostItemController {
    */
   private void setAuthorAvatar(String authorId, boolean isAnonymous) {
     // Phase 2：暂无用户头像资源，统一使用占位图即可
+  }
+
+  private void onToggleLike() {
+    if (currentPost == null) {
+      return;
+    }
+
+    User currentUser = UserSession.getInstance().getCurrentUser();
+    if (currentUser == null) {
+      new Alert(Alert.AlertType.WARNING, "请先登录再点赞").showAndWait();
+      return;
+    }
+
+    // 这里用 studentID 作为点赞用户标识（与 Comment/Reply 的 authorId 语义保持一致）
+    String userId = currentUser.getStudentID();
+    String postId = currentPost.getPostId();
+
+    new Thread(() -> {
+      PostService.LikeResult result = PostService.getInstance().toggleLike(postId, userId);
+      Platform.runLater(() -> {
+        applyLikeUI(result.likeCount(), result.liked());
+      });
+    }).start();
+  }
+
+  private void updateLikeUI(Post post) {
+    User currentUser = UserSession.getInstance().getCurrentUser();
+    boolean liked = false;
+    if (currentUser != null) {
+      liked = post.isLikedBy(currentUser.getStudentID());
+    }
+    applyLikeUI(post.getLikeCount(), liked);
+  }
+
+  private void applyLikeUI(int likeCount, boolean liked) {
+    likesLabel.setText("♥ " + likeCount);
+
+    // 已点赞：保持原红色；未点赞：复用项目已有的灰色（#888888）
+    String color = liked ? "#ff4757" : "#888888";
+    likesLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + color + "; -fx-cursor: hand;");
   }
 
   /**
