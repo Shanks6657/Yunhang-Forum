@@ -6,6 +6,7 @@ module com.yunhang.forum {
     // Data / utils
     requires com.google.gson;
     requires jakarta.mail;
+    requires java.desktop;
 
     // Optional standard modules (uncomment if used)
     // requires java.sql;

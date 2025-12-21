@@ -2,38 +2,64 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
 
-<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.yunhang.forum.controller.auth.UserProfileController"
-      spacing="15"
-      style="-fx-background-color: #1E2A38;">
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.yunhang.forum.controller.auth.UserProfileController"
+            prefHeight="650.0" prefWidth="1000.0"
+            style="-fx-background-color: #1a1c24;"> <left>
+    <VBox spacing="8" prefWidth="220" style="-fx-background-color: #23262f; -fx-background-radius: 0 20 20 0;">
+        <padding>
+            <Insets top="40" right="20" bottom="40" left="20"/>
+        </padding>
 
-    <padding>
-        <Insets top="20" right="20" bottom="20" left="20"/>
-    </padding>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Circle radius="12" fill="#3498DB"/>
+            <Label text="云航论坛" style="-fx-font-size: 22px; -fx-font-weight: 900; -fx-text-fill: white; -fx-font-family: 'Segoe UI Black';"/>
+        </HBox>
 
-    <HBox alignment="CENTER_LEFT" spacing="20">
-        <Label fx:id="welcomeLabel" style="-fx-font-size: 24px;
-                                          -fx-font-weight: bold;
-                                          -fx-text-fill: #E5E9EC;"/>
-        <Label fx:id="studentIdLabel" style="-fx-font-size: 14px;
-                                            -fx-text-fill: #95a5a6;"/>
+        <Region prefHeight="30" />
 
-        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="  🏠  个人主页" maxWidth="Infinity" styleClass="side-button-active"/>
+        <Button text="  🌐  进入广场" onAction="#handleGoToForum" maxWidth="Infinity" styleClass="side-button"/>
+        <Button text="  ✍️  发布新帖" onAction="#handleNewPost" maxWidth="Infinity" styleClass="side-button"/>
 
-        <Button text="退出登录" onAction="#handleLogoutAction" styleClass="button-danger"/>
-    </HBox>
+        <Region VBox.vgrow="ALWAYS" />
 
-    <Separator style="-fx-background-color: #495B6C;"/>
+        <Button text="注销账号" onAction="#handleDeleteAccount" maxWidth="Infinity"
+                style="-fx-text-fill: #ff6b6b; -fx-background-color: transparent; -fx-cursor: hand;"/>
+        <Button text="退出登录" onAction="#handleLogoutAction" maxWidth="Infinity" styleClass="logout-button"/>
+    </VBox>
+</left>
 
-    <Label text="我的帖子" style="-fx-font-size: 18px;
-                               -fx-font-weight: bold;
-                               -fx-text-fill: #E5E9EC;"/>
+    <center>
+        <StackPane>
+            <padding>
+                <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
 
-    <ListView fx:id="postListView" VBox.vgrow="ALWAYS" minHeight="300"
-              style="-fx-border-color: #495B6C;
-                     -fx-border-radius: 5;
-                     -fx-background-color: #2C3E50;">
-    </ListView>
+            <VBox spacing="25">
+                <VBox style="-fx-background-color: linear-gradient(to right, #2d313d, #23262f); -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 5);">
+                    <padding>
+                        <Insets top="25" right="30" bottom="25" left="30"/>
+                    </padding>
+                    <HBox alignment="CENTER_LEFT" spacing="20">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label fx:id="welcomeLabel" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: white;" text="欢迎回来, 开发者"/>
+                            <Label fx:id="studentIdLabel" style="-fx-font-size: 14px; -fx-text-fill: #808191;" text="学号: 20230001" />
+                        </VBox>
+                        <Circle radius="30" fill="#3498DB" />
+                    </HBox>
+                </VBox>
 
-</VBox>
+                <VBox spacing="15" VBox.vgrow="ALWAYS" style="-fx-background-color: #23262f; -fx-background-radius: 15;">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <Label text="我的动态" style="-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;"/>
+                    <ListView fx:id="postListView" VBox.vgrow="ALWAYS" styleClass="modern-list-view"/>
+                </VBox>
+            </VBox>
+        </StackPane>
+    </center>
+</BorderPane>

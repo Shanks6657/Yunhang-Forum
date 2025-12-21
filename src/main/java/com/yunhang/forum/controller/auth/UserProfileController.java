@@ -6,8 +6,15 @@ import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.util.UserService;
 import com.yunhang.forum.util.ViewManager;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.paint.ImagePattern;
+
+import java.awt.*;
+import java.awt.image.ImageObserver;
+import java.awt.image.ImageProducer;
 import java.util.List;
 
 public class UserProfileController {
@@ -49,5 +56,26 @@ public class UserProfileController {
         UserSession.getInstance().endSession();
         ViewManager.switchScene("auth/Login.fxml");
     }
+    @FXML
+    private void handleGoToForum() {
+        ViewManager.switchScene("auth/PostList.fxml");
+    }
+    @FXML
+    private void handleNewPost() {
+        ViewManager.switchScene("post/PostDetail.fxml");
+    }
+    @FXML
+    private void handleDeleteAccount() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("注销确认");
+        alert.setHeaderText("您确定要注销账号吗？");
+        alert.setContentText("注销后账号无法恢复。");
 
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                UserSession.getInstance().endSession();
+                ViewManager.switchScene("auth/Login.fxml");
+            }
+        });
+    }
 }

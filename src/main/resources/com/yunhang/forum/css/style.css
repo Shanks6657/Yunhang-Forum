@@ -114,3 +114,100 @@
     -fx-text-fill: -fx-success-color;
 }
 
+.side-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #808191;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 15px;
+    -fx-padding: 12 15;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-transition: 0.3s;
+}
+
+.side-button:hover {
+    -fx-background-color: #2d313d;
+    -fx-text-fill: #3498DB;
+}
+
+
+.side-button-active {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 15;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.4), 10, 0, 0, 0);
+}
+
+
+.logout-button {
+    -fx-background-color: #ff4757;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 12 15;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.logout-button:hover {
+    -fx-background-color: #ff6b81;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #bdc3c7;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 14px;
+    -fx-padding: 10 15 10 15;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #34495e;
+    -fx-text-fill: white;
+}
+
+.nav-button-active {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10 15 10 15;
+}
+
+.button-danger {
+    -fx-background-color: #c0392b;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.button-danger:hover {
+    -fx-background-color: #e74c3c;
+}
+
+.modern-list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.modern-list-view .list-cell {
+    -fx-background-color: #2d313d;
+    -fx-text-fill: #e4e6eb;
+    -fx-padding: 15;
+    -fx-background-radius: 8;
+    -fx-margin: 5 0;
+}
+
+.modern-list-view .list-cell:filled:hover {
+    -fx-background-color: #3a3f4e;
+}
+
+
+.modern-list-view .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
