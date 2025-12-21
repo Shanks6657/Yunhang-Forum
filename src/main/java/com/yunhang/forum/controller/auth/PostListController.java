@@ -3,7 +3,9 @@ package com.yunhang.forum.controller.auth;
 import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.service.strategy.PostService;
 import com.yunhang.forum.service.strategy.HotSortStrategy; // 确保导入排序策略类
-import javafx.application.Platform;
+import com.yunhang.forum.service.strategy.TimeSortStrategy;
+import com.yunhang.forum.util.ResourcePaths;
+import com.yunhang.forum.util.TaskRunner;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
@@ -13,7 +15,6 @@ import javafx.scene.control.ListView;
 import javafx.util.Callback;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -62,9 +63,8 @@ public class PostListController {
         if ("最多热门".equals(newVal)) {
           postService.setSortStrategy(new HotSortStrategy());
         } else {
-          // 时间排序：按发布时间倒序 (Lambda 实现)
-          postService.setSortStrategy(
-              posts -> posts.sort(Comparator.comparing(Post::getPublishTime).reversed()));
+          // 时间排序：按发布时间倒序
+          postService.setSortStrategy(new TimeSortStrategy());
         }
         loadPosts(); // 切换策略后重新异步加载
       });
@@ -97,7 +97,7 @@ public class PostListController {
                 try {
                   // 加载FXML文件
                   loader = new FXMLLoader(
-                      getClass().getResource("/com/yunhang.forum/fxml/auth/PostItem.fxml"));
+                      getClass().getResource(ResourcePaths.FXML_AUTH_POST_ITEM));
                   loader.load();
                   controller = loader.getController();
                 } catch (IOException e) {
@@ -125,20 +125,20 @@ public class PostListController {
    * 加载帖子数据 【微调】使用异步线程处理，防止界面卡顿
    */
   private void loadPosts() {
-    // 开启新线程处理耗时的 Service 调用 (模拟文件 IO)
-    new Thread(() -> {
+    // 开启虚拟线程处理耗时的 Service 调用 (模拟文件 IO)
+    TaskRunner.runAsync(() -> {
       try {
-        // 调用 Service 获取数据 (Service 内部已根据策略排好序)
-        List<Post> posts = postService.getAllPosts();
+        // 调用 Service 获取数据（支持搜索态 + 已按策略排序）
+        List<Post> posts = postService.getVisiblePosts();
 
         // 回到 JavaFX UI 线程更新 ListView
-        Platform.runLater(() -> {
+        TaskRunner.runOnUI(() -> {
           postListView.getItems().setAll(posts);
         });
       } catch (Exception e) {
         e.printStackTrace();
       }
-    }).start();
+    });
   }
 
   /**
@@ -146,12 +146,10 @@ public class PostListController {
    */
   @FXML
   private void refreshPosts() {
-    new Thread(() -> {
+    TaskRunner.runAsync(() -> {
       List<Post> refreshedPosts = postService.refreshPosts();
-      Platform.runLater(() -> {
-        postListView.getItems().setAll(refreshedPosts);
-      });
-    }).start();
+      TaskRunner.runOnUI(() -> postListView.getItems().setAll(refreshedPosts));
+    });
   }
 
   /**

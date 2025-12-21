@@ -46,11 +46,13 @@
 
             <Label minWidth="180.0" visible="false"/>
 
-            <TextField promptText="搜索感兴趣的内容..." prefWidth="400.0" styleClass="search-field"/>
+            <TextField fx:id="searchTextField" promptText="搜索感兴趣的内容..." prefWidth="400.0" styleClass="search-field"
+                       onAction="#onSearchEnter"/>
 
             <HBox HBox.hgrow="ALWAYS"/>
 
             <HBox alignment="CENTER" spacing="10.0">
+                <Button fx:id="publishButton" text="发布" styleClass="button-secondary"/>
                 <Label fx:id="nicknameLabel" text="加载中..." style="-fx-font-weight: bold;"/>
                 <ImageView fx:id="avatarImageView" fitHeight="40.0" fitWidth="40.0">
                     <clip>

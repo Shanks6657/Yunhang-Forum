@@ -5,7 +5,7 @@ import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.service.strategy.PostService;
-import javafx.application.Platform;
+import com.yunhang.forum.util.TaskRunner;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
@@ -80,10 +80,10 @@ public class PostDetailController {
         String userId = currentUser.getStudentID();
         String postId = currentPost.getPostId();
 
-        new Thread(() -> {
+        TaskRunner.runAsync(() -> {
             PostService.LikeResult result = PostService.getInstance().toggleLike(postId, userId);
-            Platform.runLater(() -> applyLikeUI(result.likeCount(), result.liked()));
-        }).start();
+            TaskRunner.runOnUI(() -> applyLikeUI(result.likeCount(), result.liked()));
+        });
     }
 
     private void renderComments() {
@@ -124,10 +124,10 @@ public class PostDetailController {
         String authorId = currentUser != null ? currentUser.getStudentID() : "anonymous";
         Comment inputComment = new Comment(currentPost.getPostId(), authorId, null, content);
 
-        // Service 可能涉及 IO，放到后台线程执行
-        new Thread(() -> {
+        // Service 可能涉及 IO，放到虚拟线程执行
+        TaskRunner.runAsync(() -> {
             Comment saved = PostService.getInstance().addComment(currentPost.getPostId(), inputComment);
-            Platform.runLater(() -> {
+            TaskRunner.runOnUI(() -> {
                 if (saved != null) {
                     commentInput.clear();
                     commentsContainer.getChildren().add(buildCommentNode(saved));
@@ -135,6 +135,6 @@ public class PostDetailController {
                     new Alert(Alert.AlertType.ERROR, "发送失败，请稍后再试").showAndWait();
                 }
             });
-        }).start();
+        });
     }
 }

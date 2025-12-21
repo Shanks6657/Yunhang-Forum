@@ -5,8 +5,9 @@ import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.service.strategy.PostService;
+import com.yunhang.forum.util.ResourcePaths;
+import com.yunhang.forum.util.TaskRunner;
 import com.yunhang.forum.util.ViewManager;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -109,7 +110,7 @@ public class MainLayoutController implements Initializable {
     try {
       // 加载发帖编辑器FXML
       FXMLLoader loader = new FXMLLoader(
-          getClass().getResource("/com/yunhang/forum/fxml/post/PostEditor.fxml")
+          getClass().getResource(ResourcePaths.FXML_POST_EDITOR)
       );
       Parent editorRoot = loader.load();
 
@@ -132,9 +133,8 @@ public class MainLayoutController implements Initializable {
 
       // 设置发布成功回调
       editorController.setOnPublishSuccess(() -> {
-        // 发布成功后，可以在这里添加刷新逻辑
-        // 例如：刷新帖子列表或显示成功消息
-        System.out.println("帖子发布成功，可以刷新列表");
+        // 发布成功后刷新主列表（重新加载中心内容）
+        ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST);
       });
 
       // 显示弹窗
@@ -158,23 +158,25 @@ public class MainLayoutController implements Initializable {
   public void onSearchEnter() {
     String keyword = searchTextField.getText();
     if (keyword == null || keyword.trim().isEmpty()) {
+      PostService.getInstance().setSearchKeyword(null);
+      ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST);
       return;
     }
 
-    // 使用多线程防止文件 IO 导致界面卡顿
-    new Thread(() -> {
+    // 使用虚拟线程防止 IO 导致界面卡顿
+    TaskRunner.runAsync(() -> {
       // 1. 调用 Service 层进行关键词搜索
       List<Post> results = PostService.getInstance().searchPosts(keyword);
 
       // 2. 切换回 UI 线程进行跳转和内容更新
-      Platform.runLater(() -> {
+      TaskRunner.runOnUI(() -> {
         // 跳转到帖子列表页面
-        ViewManager.loadContent("auth/PostList.fxml");
+        ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST);
 
         // 打印日志以便联调
         System.out.println("搜索触发，关键词: " + keyword + "，找到结果数: " + results.size());
       });
-    }).start();
+    });
   }
 
   // --- 导航事件实现 (Task 要求) ---
@@ -182,26 +184,26 @@ public class MainLayoutController implements Initializable {
   public void onHomeClicked() {
     System.out.println("导航: 点击首页 (Home)");
     // 使用 ViewManager 的相对路径（避免重复拼接 /com/yunhang/forum/fxml/ 前缀）
-    ViewManager.loadContent("auth/PostList.fxml");
+    ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST);
   }
 
   @FXML
   public void onSquareClicked() {
     System.out.println("导航: 点击广场 (Square)");
     // 广场内容，暂时与首页相同
-    ViewManager.loadContent("auth/PostList.fxml");
+    ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST);
   }
 
   @FXML
   public void onMyPostsClicked() {
     System.out.println("导航: 点击我的帖子 (My Posts)");
     // Phase 2：复用用户中心页，展示"我的帖子"列表
-    ViewManager.loadContent("auth/UserProfile.fxml");
+    ViewManager.loadContent(ResourcePaths.FXML_AUTH_USER_PROFILE);
   }
 
   @FXML
   public void onSettingsClicked() {
     System.out.println("导航: 点击设置 (Settings)");
-    ViewManager.loadContent("user/Settings.fxml");
+    ViewManager.loadContent(ResourcePaths.FXML_USER_SETTINGS);
   }
 }

@@ -1,6 +1,7 @@
 package com.yunhang.forum.controller.auth;
 
 import com.yunhang.forum.util.UserService;
+import com.yunhang.forum.util.ResourcePaths;
 import com.yunhang.forum.util.ViewManager;
 
 import javafx.fxml.FXML;
@@ -41,7 +42,7 @@ public class LoginController {
         if (userService.login(studentId, password)) {
             messageLabel.getStyleClass().removeAll("error", "success");
             messageLabel.setText("登录成功");
-            ViewManager.switchScene("auth/UserProfile.fxml");
+            ViewManager.switchScene(ResourcePaths.FXML_AUTH_USER_PROFILE);
 
         } else {
             setMessage("学号或密码错误", false);
@@ -51,6 +52,6 @@ public class LoginController {
     @FXML
     protected void handleRegisterLinkAction() {
         // 跳转到注册界面
-        ViewManager.switchScene("auth/Register.fxml");
+        ViewManager.switchScene(ResourcePaths.FXML_AUTH_REGISTER);
     }
 }

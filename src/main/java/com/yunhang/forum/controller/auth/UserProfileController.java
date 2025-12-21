@@ -4,6 +4,7 @@ import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.util.UserService;
+import com.yunhang.forum.util.ResourcePaths;
 import com.yunhang.forum.util.ViewManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -36,7 +37,7 @@ public class UserProfileController {
             studentIdLabel.setText("学号: " + currentUser.getStudentID());
             loadUserPosts(currentUser);
         } else {
-            ViewManager.switchScene("auth/Login.fxml");
+            ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
         }
     }
 
@@ -54,15 +55,15 @@ public class UserProfileController {
     @FXML
     protected void handleLogoutAction() {
         UserSession.getInstance().endSession();
-        ViewManager.switchScene("auth/Login.fxml");
+        ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
     }
     @FXML
     private void handleGoToForum() {
-        ViewManager.switchScene("auth/PostList.fxml");
+        ViewManager.switchScene(ResourcePaths.FXML_AUTH_POST_LIST);
     }
     @FXML
     private void handleNewPost() {
-        ViewManager.switchScene("post/PostDetail.fxml");
+        ViewManager.switchScene(ResourcePaths.FXML_POST_DETAIL);
     }
     @FXML
     private void handleDeleteAccount() {
@@ -74,7 +75,7 @@ public class UserProfileController {
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 UserSession.getInstance().endSession();
-                ViewManager.switchScene("auth/Login.fxml");
+                ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
             }
         });
     }

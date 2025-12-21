@@ -63,6 +63,24 @@ public class Post extends ObservableEntity {
     this.category = category;
   }
 
+  /**
+   * 仅用于初始化模拟数据：在实体内部完成计数与时间的设定，避免外部直接 setCount。
+   */
+  public static Post seeded(String title, String content, String authorId, PostCategory category,
+      int views, int likes, int comments, LocalDateTime publishTime) {
+    Post post = new Post(title, content, authorId, category);
+
+    post.status = PostStatus.PUBLISHED;
+    post.publishTime = (publishTime != null) ? publishTime : LocalDateTime.now();
+    post.updateTime = post.publishTime;
+
+    post.viewCount = Math.max(0, views);
+    post.likeCount = Math.max(0, likes);
+    post.commentCount = Math.max(0, comments);
+
+    return post;
+  }
+
   public Post(String s) {
     this();
     this.title = "示例帖子";
@@ -107,10 +125,8 @@ public class Post extends ObservableEntity {
   public void setViewCount(int viewCount) { this.viewCount = viewCount; }
 
   public int getLikeCount() { return likeCount; }
-  public void setLikeCount(int likeCount) { this.likeCount = likeCount; }
 
   public int getCommentCount() { return commentCount; }
-  public void setCommentCount(int commentCount) { this.commentCount = commentCount; }
 
   public List<PostImage> getPostImages() { return postImages; }
   public void setPostImages(List<PostImage> postImages) { this.postImages = postImages; }

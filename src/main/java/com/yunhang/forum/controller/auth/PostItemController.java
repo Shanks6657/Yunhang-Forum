@@ -6,7 +6,7 @@ import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.service.strategy.PostService;
 import com.yunhang.forum.util.DateUtil;
-import javafx.application.Platform;
+import com.yunhang.forum.util.TaskRunner;
 import javafx.fxml.FXML;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.control.Alert;
@@ -207,12 +207,10 @@ public class PostItemController {
     String userId = currentUser.getStudentID();
     String postId = currentPost.getPostId();
 
-    new Thread(() -> {
+    TaskRunner.runAsync(() -> {
       PostService.LikeResult result = PostService.getInstance().toggleLike(postId, userId);
-      Platform.runLater(() -> {
-        applyLikeUI(result.likeCount(), result.liked());
-      });
-    }).start();
+      TaskRunner.runOnUI(() -> applyLikeUI(result.likeCount(), result.liked()));
+    });
   }
 
   private void updateLikeUI(Post post) {

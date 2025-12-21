@@ -4,6 +4,7 @@ import com.yunhang.forum.controller.post.PostDetailController;
 import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.util.UserService;
 import com.yunhang.forum.service.strategy.PostService;
+import com.yunhang.forum.util.ResourcePaths;
 import com.yunhang.forum.util.ViewManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -23,7 +24,7 @@ public class MainApp extends Application {
 
         if (DEBUG_MODE_POST_DETAIL) {
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/yunhang/forum/fxml/post/PostDetail.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(ResourcePaths.FXML_POST_DETAIL));
             Parent root = loader.load();
             PostDetailController controller = loader.getController();
 
@@ -38,7 +39,7 @@ public class MainApp extends Application {
             stage.show();
 
         } else {
-            ViewManager.switchScene("auth/Login.fxml");
+            ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
             stage.setTitle("Yunhang Forum - 用户登录");
             stage.show();
         }

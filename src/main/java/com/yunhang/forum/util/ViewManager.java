@@ -20,7 +20,7 @@ public final class ViewManager {
     private static Stage primaryStage;
 
     // 默认的 FXML 资源路径前缀
-    private static final String FXML_PATH_PREFIX = "/com/yunhang/forum/fxml/";
+    private static final String FXML_PATH_PREFIX = ResourcePaths.FXML_PREFIX;
     // 默认的 CSS 资源路径前缀
     private static final String CSS_PATH_PREFIX = "/com/yunhang/forum/css/";
     private static final String STYLE_CSS = "style.css"; // 假定所有场景都使用这个CSS
@@ -43,7 +43,7 @@ public final class ViewManager {
         URL resourceUrl = ViewManager.class.getResource(fullPath);
 
         if (resourceUrl == null) {
-            System.err.println("资源未找到! 尝试路径: " + fullPath);
+            LogUtil.warn("资源未找到! 尝试路径: " + fullPath);
             throw new IOException("FXML resource not found: " + fullPath);
         }
 
@@ -91,7 +91,7 @@ public final class ViewManager {
             Parent content = loadFxmlResource(fxmlPath);
             mainLayout.setCenter(content);
         } catch (IOException e) {
-            System.err.println("Failed to load FXML content: " + fxmlPath);
+            LogUtil.error("Failed to load FXML content: " + fxmlPath, e);
             throw new RuntimeException("Failed to load FXML: " + fxmlPath, e);
         }
     }
@@ -107,7 +107,7 @@ public final class ViewManager {
             Parent header = loadFxmlResource(fxmlPath);
             mainLayout.setTop(header);
         } catch (IOException e) {
-            System.err.println("Failed to load FXML header: " + fxmlPath);
+            LogUtil.error("Failed to load FXML header: " + fxmlPath, e);
             throw new RuntimeException("Failed to load header FXML.", e);
         }
     }
@@ -123,7 +123,7 @@ public final class ViewManager {
             Parent footer = loadFxmlResource(fxmlPath);
             mainLayout.setBottom(footer);
         } catch (IOException e) {
-            System.err.println("Failed to load FXML footer: " + fxmlPath);
+            LogUtil.error("Failed to load FXML footer: " + fxmlPath, e);
             throw new RuntimeException("Failed to load footer FXML.", e);
         }
     }
@@ -158,7 +158,7 @@ public final class ViewManager {
 
         } catch (IOException e) {
             // 如果 FXML 路径错误或内容有误，会捕获到 IOException
-            System.err.println("Failed to load FXML scene: " + fxmlPath);
+            LogUtil.error("Failed to load FXML scene: " + fxmlPath, e);
             // 抛出运行时异常，但现在 FXML 路径错误会更早被 loadFxmlResource 捕获
             throw new RuntimeException("Failed to load scene: " + fxmlPath, e);
         }
@@ -166,7 +166,7 @@ public final class ViewManager {
 
     @Deprecated
     public static void showLoginWindow() {
-        switchScene("auth/Login.fxml");
+        switchScene(ResourcePaths.FXML_AUTH_LOGIN);
     }
 }
 

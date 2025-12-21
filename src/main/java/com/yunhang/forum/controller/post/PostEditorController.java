@@ -5,7 +5,7 @@ import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.enums.PostCategory;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.service.strategy.PostService;
-import javafx.application.Platform;
+import com.yunhang.forum.util.TaskRunner;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
@@ -86,12 +86,8 @@ public class PostEditorController {
       return;
     }
 
-    // 获取用户ID（这里需要根据User类的实际方法获取ID）
-    String authorId = getUserId(currentUser);
-    if (authorId == null || authorId.isEmpty()) {
-      showAlert("错误", "无法获取用户信息", Alert.AlertType.ERROR);
-      return;
-    }
+    // 使用统一的用户标识（与点赞/评论逻辑保持一致）
+    String authorId = currentUser.getStudentID();
 
     // 构建帖子对象
     Post post = new Post(
@@ -104,32 +100,18 @@ public class PostEditorController {
     // 设置匿名状态
     post.setAnonymous(anonymousCheckBox.isSelected());
 
-    // 如果是匿名发布，设置显示作者为匿名
-    if (anonymousCheckBox.isSelected()) {
-      post.setAnonymous(true);
-    }
-
     // 禁用按钮，显示加载状态
     publishButton.setDisable(true);
     publishButton.setText("发布中...");
 
-    // 异步创建帖子
-    new Thread(() -> {
+    // 异步创建帖子（虚拟线程，避免阻塞 UI）
+    TaskRunner.runAsync(() -> {
       try {
-        // 模拟网络延迟
-        Thread.sleep(1000);
-
-        // 这里应该调用实际的PostService
-        System.out.println("创建帖子 - 标题: " + post.getTitle());
-        System.out.println("作者ID: " + authorId);
-        System.out.println("分类: " + post.getCategory());
-        System.out.println("匿名: " + post.isAnonymous());
-
-        // 获取PostService实例并创建帖子
-        // PostService.getInstance().createPost(post, onSuccess, onError);
+        // 调用 Service 创建帖子（写入缓存/持久化入口）
+        PostService.getInstance().createPost(post);
 
         // 切换到UI线程更新界面
-        Platform.runLater(() -> {
+        TaskRunner.runOnUI(() -> {
           // 发布成功
           showAlert("成功", "帖子发布成功！", Alert.AlertType.INFORMATION);
 
@@ -146,52 +128,13 @@ public class PostEditorController {
 
       } catch (Exception e) {
         e.printStackTrace();
-        Platform.runLater(() -> {
+        TaskRunner.runOnUI(() -> {
           showAlert("错误", "发布失败: " + e.getMessage(), Alert.AlertType.ERROR);
           publishButton.setDisable(false);
           publishButton.setText("发布");
         });
       }
-    }).start();
-  }
-
-  /**
-   * 从User对象获取用户ID
-   * 根据您的User类实际情况调整这个方法
-   */
-  private String getUserId(User user) {
-    if (user == null) {
-      return null;
-    }
-
-    // 假设User类有以下方法之一来获取ID：
-    // 1. user.getUserId() - 如果User类有这个属性
-    // 2. user.getId() - 如果User类有这个属性
-    // 3. 其他标识符
-
-    try {
-      // 方法1：尝试getUserId()方法
-      java.lang.reflect.Method method = user.getClass().getMethod("getUserId");
-      Object result = method.invoke(user);
-      if (result instanceof String) {
-        return (String) result;
-      }
-    } catch (Exception e1) {
-      try {
-        // 方法2：尝试getId()方法
-        java.lang.reflect.Method method = user.getClass().getMethod("getId");
-        Object result = method.invoke(user);
-        if (result instanceof String) {
-          return (String) result;
-        }
-      } catch (Exception e2) {
-        // 如果都没有对应的方法，返回默认值或抛出异常
-        System.err.println("无法获取用户ID，User类缺少相应方法");
-      }
-    }
-
-    // 如果以上方法都不行，返回一个默认值（仅用于开发测试）
-    return "user_" + System.currentTimeMillis();
+    });
   }
 
   /**

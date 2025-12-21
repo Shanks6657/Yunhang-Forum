@@ -10,7 +10,6 @@ import com.yunhang.forum.model.enums.PostStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -27,9 +26,14 @@ public class PostService {
   private final List<Post> cachedPosts = new ArrayList<>();
   private boolean initialized = false;
 
-  // 【新增】维护当前的排序策略，默认为按时间排序
-  private PostSortStrategy sortStrategy =
-      posts -> posts.sort(Comparator.comparing(Post::getPublishTime).reversed());
+  // 维护当前的排序策略，默认为按时间排序
+  private PostSortStrategy sortStrategy = new TimeSortStrategy();
+
+  // 维护当前的搜索策略，默认为按标题关键字搜索
+  private PostSearchStrategy searchStrategy = new TitleKeywordStrategy();
+
+  // 维护当前的搜索关键字（由 UI 设置；列表页按此渲染）
+  private volatile String activeSearchKeyword;
 
   private PostService() {
     // 私有构造方法，单例模式
@@ -49,16 +53,70 @@ public class PostService {
    * 【新增】设置排序策略（供 PostListController 调用）
    */
   public void setSortStrategy(PostSortStrategy sortStrategy) {
-    this.sortStrategy = sortStrategy;
+    this.sortStrategy = (sortStrategy != null) ? sortStrategy : new TimeSortStrategy();
+  }
+
+  /**
+   * 设置搜索策略（允许运行时切换）。
+   */
+  public void setSearchStrategy(PostSearchStrategy searchStrategy) {
+    this.searchStrategy = (searchStrategy != null) ? searchStrategy : new TitleKeywordStrategy();
+  }
+
+  /**
+   * 设置当前搜索关键字（为空则清除搜索态）。
+   */
+  public void setSearchKeyword(String keyword) {
+    if (keyword == null || keyword.trim().isEmpty()) {
+      this.activeSearchKeyword = null;
+    } else {
+      this.activeSearchKeyword = keyword.trim();
+    }
   }
 
   /**
    * 【新增】搜索帖子（供 MainLayoutController 调用）
    */
   public List<Post> searchPosts(String keyword) {
+    setSearchKeyword(keyword);
     List<Post> allPosts = getAllPosts();
-    PostSearchStrategy searchStrategy = new TitleKeywordStrategy();
-    return searchStrategy.search(allPosts, keyword);
+    return (searchStrategy != null) ? searchStrategy.search(allPosts, keyword) : allPosts;
+  }
+
+  /**
+   * 列表页展示用：如果存在搜索关键字，则返回搜索结果；否则返回全量列表。
+   */
+  public List<Post> getVisiblePosts() {
+    String keyword = this.activeSearchKeyword;
+    if (keyword == null || keyword.isBlank()) {
+      return getAllPosts();
+    }
+    List<Post> allPosts = getAllPosts();
+    return (searchStrategy != null) ? searchStrategy.search(allPosts, keyword) : allPosts;
+  }
+
+  /**
+   * 创建帖子：加入缓存并设置为已发布（供 PostEditorController 调用）。
+   */
+  public void createPost(Post post) {
+    if (post == null) {
+      throw new IllegalArgumentException("post must not be null");
+    }
+    ensureInitialized();
+
+    // 确保帖子进入已发布状态
+    if (post.getStatus() == PostStatus.DRAFT) {
+      if (post.isAnonymous()) {
+        post.publishAnonymously();
+      } else {
+        post.publish();
+      }
+    }
+
+    // 新帖子放到缓存头部（后续仍会由排序策略重新排序）
+    synchronized (cachedPosts) {
+      cachedPosts.add(0, post);
+    }
   }
 
   /**
@@ -81,28 +139,28 @@ public class PostService {
     }
 
     // 模拟一些帖子数据（仅初始化一次，保证点赞/评论不会因重新加载而丢失）
-    cachedPosts.add(createPost("Java多线程学习心得", "最近在学习Java多线程编程，分享一些心得体会...",
-        "student_001", PostCategory.LEARNING, 150, 45, 23, LocalDateTime.now().minusHours(2)));
+    cachedPosts.add(Post.seeded("Java多线程学习心得", "最近在学习Java多线程编程，分享一些心得体会...",
+      "student_001", PostCategory.LEARNING, 150, 45, 23, LocalDateTime.now().minusHours(2)));
 
-    cachedPosts.add(createPost("校园篮球比赛通知", "本周五下午体育馆举行篮球比赛，欢迎大家参加！",
-        "sports_committee", PostCategory.CAMPUS_LIFE, 320, 120, 56,
-        LocalDateTime.now().minusHours(5)));
-
-    cachedPosts.add(
-        createPost("转让二手笔记本电脑", "联想ThinkPad，9成新，配置：i7/16G/512G SSD", "student_2024",
-            PostCategory.SECOND_HAND, 180, 65, 12, LocalDateTime.now().minusDays(1)));
+    cachedPosts.add(Post.seeded("校园篮球比赛通知", "本周五下午体育馆举行篮球比赛，欢迎大家参加！",
+      "sports_committee", PostCategory.CAMPUS_LIFE, 320, 120, 56,
+      LocalDateTime.now().minusHours(5)));
 
     cachedPosts.add(
-        createPost("周末编程学习小组招募", "寻找对Java开发感兴趣的同学一起学习交流", "tech_group",
-            PostCategory.ACTIVITY, 95, 32, 18, LocalDateTime.now().minusDays(2)));
+      Post.seeded("转让二手笔记本电脑", "联想ThinkPad，9成新，配置：i7/16G/512G SSD", "student_2024",
+        PostCategory.SECOND_HAND, 180, 65, 12, LocalDateTime.now().minusDays(1)));
 
     cachedPosts.add(
-        createPost("关于宿舍网络的问题", "最近宿舍网络不太稳定，有相同情况的同学吗？", "student_net",
-            PostCategory.QNA, 210, 78, 45, LocalDateTime.now().minusHours(10)));
+      Post.seeded("周末编程学习小组招募", "寻找对Java开发感兴趣的同学一起学习交流", "tech_group",
+        PostCategory.ACTIVITY, 95, 32, 18, LocalDateTime.now().minusDays(2)));
 
     cachedPosts.add(
-        createPost("实习经验分享会", "本周六下午有学长学姐分享实习经验，欢迎参加", "career_center",
-            PostCategory.EMPLOYMENT, 420, 200, 89, LocalDateTime.now().minusHours(1)));
+      Post.seeded("关于宿舍网络的问题", "最近宿舍网络不太稳定，有相同情况的同学吗？", "student_net",
+        PostCategory.QNA, 210, 78, 45, LocalDateTime.now().minusHours(10)));
+
+    cachedPosts.add(
+      Post.seeded("实习经验分享会", "本周六下午有学长学姐分享实习经验，欢迎参加", "career_center",
+        PostCategory.EMPLOYMENT, 420, 200, 89, LocalDateTime.now().minusHours(1)));
 
     initialized = true;
   }
@@ -199,20 +257,6 @@ public class PostService {
   public List<Post> refreshPosts() {
     // 模拟刷新操作，返回最新的帖子列表
     return getAllPosts();
-  }
-
-  /**
-   * 创建帖子（辅助方法）
-   */
-  private Post createPost(String title, String content, String authorId, PostCategory category,
-      int views, int likes, int comments, LocalDateTime publishTime) {
-    Post post = new Post(title, content, authorId, category);
-    post.setPublishTime(publishTime);
-    post.setViewCount(views);
-    post.setLikeCount(likes);
-    post.setCommentCount(comments);
-    post.publish(); // 设置为已发布状态
-    return post;
   }
 
   /** 添加评论到帖子（简化实现） */

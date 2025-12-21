@@ -1,6 +1,8 @@
 package com.yunhang.forum.controller.auth;
 
 import com.yunhang.forum.util.UserService;
+import com.yunhang.forum.util.ResourcePaths;
+import com.yunhang.forum.util.TaskRunner;
 import com.yunhang.forum.util.ViewManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -80,9 +82,7 @@ public class RegisterController {
             sendCodeButton.setText("发送验证码");
         });
 
-        Thread thread = new Thread(sendTask, "send-verification-code");
-        thread.setDaemon(true);
-        thread.start();
+        TaskRunner.runAsync(sendTask);
     }
 
     private void startCountdown() {
@@ -160,6 +160,6 @@ public class RegisterController {
     @FXML
     protected void handleBackToLoginAction() {
         stopCountdown();
-        ViewManager.switchScene("auth/Login.fxml");
+        ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
     }
 }

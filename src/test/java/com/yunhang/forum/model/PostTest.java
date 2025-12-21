@@ -1,6 +1,7 @@
 package com.yunhang.forum.model;
 
 import com.yunhang.forum.model.entity.Post;
+import com.yunhang.forum.model.entity.Comment;
 import com.yunhang.forum.model.entity.PostImage;
 import com.yunhang.forum.model.enums.PostCategory;
 import com.yunhang.forum.model.enums.PostStatus;
@@ -265,12 +266,20 @@ public class PostTest {
 
       // 设置不同的互动数据
       postA.setViewCount(100);
-      postA.setLikeCount(20);
-      postA.setCommentCount(10);
+      for (int i = 0; i < 20; i++) {
+        postA.toggleLike("user_a_" + i);
+      }
+      for (int i = 0; i < 10; i++) {
+        postA.addComment(new Comment(postA.getPostId(), "commenter_a_" + i, null, "comment"));
+      }
 
       postB.setViewCount(200);
-      postB.setLikeCount(40);
-      postB.setCommentCount(20);
+      for (int i = 0; i < 40; i++) {
+        postB.toggleLike("user_b_" + i);
+      }
+      for (int i = 0; i < 20; i++) {
+        postB.addComment(new Comment(postB.getPostId(), "commenter_b_" + i, null, "comment"));
+      }
 
       // 测试热度排序
       Comparator<Post> hotComparator = Post.getHotnessComparator();
@@ -332,8 +341,12 @@ public class PostTest {
 
       // 设置一些互动数据
       toolPost.setViewCount(50);
-      toolPost.setLikeCount(20);
-      toolPost.setCommentCount(10);
+      for (int i = 0; i < 20; i++) {
+        toolPost.toggleLike("user_tool_" + i);
+      }
+      for (int i = 0; i < 10; i++) {
+        toolPost.addComment(new Comment(toolPost.getPostId(), "commenter_tool_" + i, null, "comment"));
+      }
       System.out.println("   设置互动后是否热门: " + toolPost.isHot());
 
       boolean allToolsWork = toolPost.isVisible() &&
@@ -355,8 +368,12 @@ public class PostTest {
       Post stringPost = new Post("测试帖子", "测试toString", "user_string", PostCategory.LEARNING);
       stringPost.publish();
       stringPost.setViewCount(100);
-      stringPost.setLikeCount(50);
-      stringPost.setCommentCount(20);
+      for (int i = 0; i < 50; i++) {
+        stringPost.toggleLike("user_string_" + i);
+      }
+      for (int i = 0; i < 20; i++) {
+        stringPost.addComment(new Comment(stringPost.getPostId(), "commenter_string_" + i, null, "comment"));
+      }
 
       String postString = stringPost.toString();
       System.out.println("   toString结果: " + postString);
