@@ -1,6 +1,7 @@
 package com.yunhang.forum.util;
 
 import com.yunhang.forum.dao.DataLoader;
+import com.yunhang.forum.model.entity.Notification;
 import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.entity.Student;
@@ -146,5 +147,62 @@ public class UserService {
         List<Post> userPosts = user.getPublishedPosts();
         userPosts.sort((p1, p2) -> p2.getPublishTime().compareTo(p1.getPublishTime()));
         return userPosts;
+    }
+
+    /**
+     * 直接通知指定用户并立即持久化到 users.json。
+     * targetUserId 语义：studentID。
+     */
+    public synchronized boolean sendNotification(String targetUserId, Notification notification) {
+        if (dataLoader == null) {
+            LogUtil.warn("sendNotification ignored: DataLoader is null");
+            return false;
+        }
+        if (targetUserId == null || targetUserId.isBlank() || notification == null) {
+            return false;
+        }
+
+        List<User> users = dataLoader.loadUsers();
+        if (users == null) {
+            users = new ArrayList<>();
+        }
+
+        User target = null;
+        for (User u : users) {
+            if (u != null && targetUserId.equals(u.getStudentID())) {
+                target = u;
+                break;
+            }
+        }
+        if (target == null) {
+            LogUtil.warn("sendNotification: target user not found: " + targetUserId);
+            return false;
+        }
+
+        // De-dupe: same content within 1 second window
+        boolean duplicated = false;
+        for (Notification n : target.getNotifications()) {
+            if (n == null) continue;
+            if (Objects.equals(n.getContent(), notification.getContent()) && n.getTime() != null && notification.getTime() != null) {
+                long diff = Math.abs(java.time.Duration.between(n.getTime(), notification.getTime()).toMillis());
+                if (diff <= 1000) {
+                    duplicated = true;
+                    break;
+                }
+            }
+        }
+        if (!duplicated) {
+            target.addNotification(notification);
+        }
+
+        boolean saved = dataLoader.saveUsers(users);
+        if (!saved) {
+            LogUtil.warn("sendNotification: saveUsers returned false");
+        }
+
+        // Keep in-memory map in sync for currently logged-in user / UI
+        GlobalVariables.userMap.put(target.getStudentID(), target);
+
+        return saved;
     }
 }

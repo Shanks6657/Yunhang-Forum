@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane fx:id="mainRoot" prefHeight="600.0" prefWidth="900.0"
+<BorderPane fx:id="mainRoot" prefHeight="768.0" prefWidth="1024.0"
             stylesheets="/com/yunhang/forum/css/style.css"
             xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.yunhang.forum.controller.main.MainLayoutController">
@@ -33,6 +33,13 @@
                     onAction="#onMyPostsClicked"/>
             <Button text="⚙️ 设置 (Settings)" maxWidth="Infinity" styleClass="nav-button"
                     onAction="#onSettingsClicked"/>
+
+            <!-- spacer -->
+            <VBox VBox.vgrow="ALWAYS"/>
+
+            <!-- global account actions -->
+            <Button text="注销账号" maxWidth="Infinity" styleClass="nav-button" onAction="#onDeleteAccountClicked"/>
+            <Button text="退出登录" maxWidth="Infinity" styleClass="nav-button" onAction="#onLogoutClicked"/>
         </VBox>
     </left>
 

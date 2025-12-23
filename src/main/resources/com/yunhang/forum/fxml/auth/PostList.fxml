@@ -5,7 +5,6 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -27,10 +26,8 @@
     </top>
 
     <center>
-        <ScrollPane fitToWidth="true">
-            <VBox spacing="0.0">
-                <ListView fx:id="postListView"/>
-            </VBox>
-        </ScrollPane>
+        <VBox>
+            <ListView fx:id="postListView" VBox.vgrow="ALWAYS"/>
+        </VBox>
     </center>
 </BorderPane>

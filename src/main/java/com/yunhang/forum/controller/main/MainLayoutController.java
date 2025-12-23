@@ -1,10 +1,13 @@
 package com.yunhang.forum.controller.main;
 
 import com.yunhang.forum.controller.post.PostEditorController;
+import com.yunhang.forum.dao.DataLoader;
+import com.yunhang.forum.model.entity.GlobalVariables;
 import com.yunhang.forum.model.entity.Post;
 import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.service.strategy.PostService;
+import com.yunhang.forum.util.AppContext;
 import com.yunhang.forum.util.LogUtil;
 import com.yunhang.forum.util.ResourcePaths;
 import com.yunhang.forum.util.TaskRunner;
@@ -12,6 +15,7 @@ import com.yunhang.forum.util.ViewManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -27,6 +31,7 @@ import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -184,27 +189,70 @@ public class MainLayoutController implements Initializable {
   @FXML
   public void onHomeClicked() {
     LogUtil.info("导航: 点击首页 (Home)");
-    // 使用 ViewManager 的相对路径（避免重复拼接 /com/yunhang/forum/fxml/ 前缀）
+    // Home: time sort
+    PostService.getInstance().setSortStrategy(new com.yunhang.forum.service.strategy.impl.TimeSortStrategy());
     ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST);
   }
 
   @FXML
   public void onSquareClicked() {
     LogUtil.info("导航: 点击广场 (Square)");
-    // 广场内容，暂时与首页相同
+    // Square: hot sort
+    PostService.getInstance().setSortStrategy(new com.yunhang.forum.service.strategy.impl.HotSortStrategy());
     ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST);
   }
 
   @FXML
   public void onMyPostsClicked() {
     LogUtil.info("导航: 点击我的帖子 (My Posts)");
-    // Phase 2：复用用户中心页，展示"我的帖子"列表
-    ViewManager.loadContent(ResourcePaths.FXML_AUTH_USER_PROFILE);
+    ViewManager.loadContent(ResourcePaths.FXML_MAIN_MY_POSTS);
+
+    // Auto-refresh once the view is loaded
+    Node center = ViewManager.getMainLayout() != null ? ViewManager.getMainLayout().getCenter() : null;
+    if (center != null && center.getUserData() instanceof MyPostsController controller) {
+      controller.refreshData();
+    }
   }
 
   @FXML
   public void onSettingsClicked() {
     LogUtil.info("导航: 点击设置 (Settings)");
     ViewManager.loadContent(ResourcePaths.FXML_USER_SETTINGS);
+  }
+
+  @FXML
+  public void onLogoutClicked() {
+    UserSession.getInstance().endSession();
+    ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
+  }
+
+  @FXML
+  public void onDeleteAccountClicked() {
+    User currentUser = UserSession.getInstance().getCurrentUser();
+    if (currentUser == null) {
+      ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
+      return;
+    }
+
+    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+    alert.setTitle("注销确认");
+    alert.setHeaderText("您确定要注销账号吗？");
+    alert.setContentText("注销后账号无法恢复。");
+
+    alert.showAndWait().ifPresent(response -> {
+      if (response == javafx.scene.control.ButtonType.OK) {
+        // Remove from in-memory map
+        GlobalVariables.userMap.remove(currentUser.getStudentID());
+
+        // Persist removal
+        DataLoader loader = AppContext.getDataLoader();
+        if (loader != null) {
+          loader.saveUsers(new ArrayList<>(GlobalVariables.userMap.values()));
+        }
+
+        UserSession.getInstance().endSession();
+        ViewManager.switchScene(ResourcePaths.FXML_AUTH_LOGIN);
+      }
+    });
   }
 }

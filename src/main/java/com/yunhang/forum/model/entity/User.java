@@ -124,12 +124,27 @@ public abstract class User {
      * 关键逻辑：由可观察实体在事件触发时调用。
      */
     public void addNotification(com.yunhang.forum.model.entity.Notification notification) {
-        if (notification != null) {
-            notifications.add(notification);
+        if (notification == null) {
+            return;
+        }
+        notifications.add(notification);
+
+        // Keep canonical in-memory instance in sync (important when multiple instances exist).
+        User canonical = GlobalVariables.userMap.get(this.studentID);
+        if (canonical != null && canonical != this) {
+            canonical.notifications.add(notification);
         }
     }
 
-    /** 获取用户的全部通知（快照拷贝）。 */
+    /** 获取通知数量（不暴露内部可变集合）。 */
+    public int getNotificationCount() {
+        return notifications.size();
+    }
+
+    /**
+     * 获取用户的全部通知（快照拷贝）。
+     * UI 刷新应每次重新获取快照。
+     */
     public List<com.yunhang.forum.model.entity.Notification> getNotifications() {
         return new ArrayList<>(notifications);
     }

@@ -12,6 +12,8 @@ import com.yunhang.forum.service.strategy.impl.TimeSortStrategy;
 import com.yunhang.forum.service.strategy.impl.TitleKeywordStrategy;
 import com.yunhang.forum.util.AppContext;
 import com.yunhang.forum.util.LogUtil;
+import com.yunhang.forum.model.entity.Notification;
+import com.yunhang.forum.util.UserService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -142,17 +144,20 @@ public class PostService {
     return cachedPosts;
   }
 
+  private DataLoader resolveLoader() {
+    DataLoader ctx = AppContext.getDataLoader();
+    if (ctx != null && ctx != this.dataLoader) {
+      this.dataLoader = ctx;
+    }
+    return this.dataLoader;
+  }
+
   private synchronized void ensureInitialized() {
     if (initialized) {
       return;
     }
 
-    // Prefer loading from DAO
-    DataLoader loader = this.dataLoader;
-    if (loader == null) {
-      loader = AppContext.getDataLoader();
-      this.dataLoader = loader;
-    }
+    DataLoader loader = resolveLoader();
 
     if (loader != null) {
       try {
@@ -195,11 +200,7 @@ public class PostService {
   }
 
   private void persistBestEffort() {
-    DataLoader loader = this.dataLoader;
-    if (loader == null) {
-      loader = AppContext.getDataLoader();
-      this.dataLoader = loader;
-    }
+    DataLoader loader = resolveLoader();
     if (loader == null) {
       return;
     }
@@ -233,10 +234,20 @@ public class PostService {
     if (post == null) {
       return new LikeResult(false, 0);
     }
+
     boolean liked = post.toggleLike(userId);
 
-    // NEW: persist likes change (best-effort)
+    // persist likes change
     persistBestEffort();
+
+    // NEW: like notification (only on like action, not unlike)
+    if (liked) {
+      String authorId = post.getAuthorId();
+      if (authorId != null && !authorId.isBlank() && userId != null && !authorId.equals(userId)) {
+        String content = String.format("%s 点赞了你的帖子《%s》", userId, post.getTitle());
+        userService().sendNotification(authorId, new Notification("点赞提醒", content));
+      }
+    }
 
     return new LikeResult(liked, post.getLikeCount());
   }
@@ -251,31 +262,31 @@ public class PostService {
       return null;
     }
 
-    int beforeSize = post.getComments().size();
     User currentUser = UserSession.getInstance().getCurrentUser();
+    String commenterId = (currentUser != null) ? currentUser.getStudentID() : comment.getAuthorId();
 
-    Comment saved;
+    // Always append comment data without triggering model-layer observer notifications.
+    // We do this by using Post.addComment(User,String) which is now data-only.
     if (currentUser != null) {
-      // 使用 Post 的业务方法，确保触发通知等副作用
       post.addComment(currentUser, comment.getContent());
-      List<Comment> after = post.getComments();
-      if (after.size() > beforeSize) {
-        saved = after.get(after.size() - 1);
-      } else {
-        saved = null;
-      }
     } else {
-      // 无登录态：仅追加数据
       post.addComment(comment);
-      saved = comment;
     }
 
-    // NEW: persist comment change (best-effort)
-    if (saved != null) {
-      persistBestEffort();
+    // Persist post/comment
+    persistBestEffort();
+
+    // Direct notify author (persisted), skip self-comment
+    String authorId = post.getAuthorId();
+    if (authorId != null && !authorId.isBlank() && commenterId != null && !authorId.equals(commenterId)) {
+      String commenterNick = (currentUser != null) ? currentUser.getNickname() : commenterId;
+      String content = String.format("%s 评论了你的帖子《%s》：%s", commenterNick, post.getTitle(), comment.getContent());
+      userService().sendNotification(authorId, new Notification("新评论提醒", content));
     }
 
-    return saved;
+    // Return the latest comment (best-effort)
+    List<Comment> after = post.getComments();
+    return after.isEmpty() ? null : after.get(after.size() - 1);
   }
 
   /**
@@ -324,5 +335,43 @@ public class PostService {
       return false;
     post.addComment(new Student(comment.getAuthorId(), "匿名", "pass"), comment.getContent());
     return true;
+  }
+
+  /**
+   * 获取指定作者发布的帖子（authorId 使用 studentID 语义）。
+   */
+  public List<Post> getPostsByAuthor(String authorId) {
+    if (authorId == null || authorId.isBlank()) {
+      return new ArrayList<>();
+    }
+    List<Post> all = getAllPosts();
+    List<Post> result = new ArrayList<>();
+    for (Post p : all) {
+      if (p != null && authorId.equals(p.getAuthorId())) {
+        result.add(p);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * 进入详情页时调用：递增浏览量并持久化。
+   */
+  public int incrementView(String postId) {
+    Post post = findPostById(postId);
+    if (post == null) {
+      return 0;
+    }
+    post.incrementViewCount();
+    persistBestEffort();
+    return post.getViewCount();
+  }
+
+  /**
+   * Create a fresh UserService bound to the current AppContext DataLoader.
+   * Avoid caching because tests/app may swap DataLoader at runtime.
+   */
+  private UserService userService() {
+    return new UserService(AppContext.getDataLoader(), null);
   }
 }

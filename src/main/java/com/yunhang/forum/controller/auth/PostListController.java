@@ -7,6 +7,7 @@ import com.yunhang.forum.service.strategy.impl.TimeSortStrategy;
 import com.yunhang.forum.util.LogUtil;
 import com.yunhang.forum.util.ResourcePaths;
 import com.yunhang.forum.util.TaskRunner;
+import com.yunhang.forum.util.ViewManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
@@ -44,6 +45,17 @@ public class PostListController {
 
     // 配置ListView
     configureListView();
+
+    // NEW: list click navigation -> detail
+    if (postListView != null) {
+      postListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+        if (newVal != null) {
+          ViewManager.showPostDetail(newVal);
+          // Clear selection so clicking the same item again still triggers
+          postListView.getSelectionModel().clearSelection();
+        }
+      });
+    }
 
     // 【新增】初始化排序下拉框逻辑
     initSortComboBox();

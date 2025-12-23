@@ -659,19 +659,8 @@ public class Post extends ObservableEntity {
     this.comments.add(comment);
     incrementCommentCount();
 
-    // 确保作者在观察者列表中（兼容：authorId 可能是 studentId 或旧的 userID）
-    User author = resolveAuthor();
-    if (author != null) {
-      this.addObserver(author);
-    }
-
-    // 创建并分发事件
-    Event event = new Event(
-        EventType.COMMENT_CREATED,
-        commenter,
-        String.format("%s 评论了你的帖子《%s》：%s", commenter.getNickname(), this.title, content)
-    );
-    notifyObservers(event);
+    // NOTE: Notification is handled by PostService -> UserService.sendNotification (persistent).
+    // Do NOT use observer list here to avoid duplicate notifications.
   }
 
   // 与类图对齐：按 Comment 入参的重载

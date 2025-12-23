@@ -54,11 +54,18 @@ public class UserProfileController {
     }
     @FXML
     private void handleGoToForum() {
-        ViewManager.switchScene(ResourcePaths.FXML_AUTH_POST_LIST);
+        // Enter main shell, then load post list into center
+        ViewManager.switchScene(ResourcePaths.FXML_MAIN_LAYOUT);
+        // After main layout is ready, content will be loaded by MainLayoutController.initialize();
+        // Force to list explicitly as well.
+        com.yunhang.forum.util.TaskRunner.runOnUI(() -> ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST));
     }
+
     @FXML
     private void handleNewPost() {
-        ViewManager.switchScene(ResourcePaths.FXML_POST_DETAIL);
+        // Enter main shell; user can publish via the top Publish button (modal)
+        ViewManager.switchScene(ResourcePaths.FXML_MAIN_LAYOUT);
+        com.yunhang.forum.util.TaskRunner.runOnUI(() -> ViewManager.loadContent(ResourcePaths.FXML_AUTH_POST_LIST));
     }
     @FXML
     private void handleDeleteAccount() {

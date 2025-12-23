@@ -6,6 +6,7 @@ import com.yunhang.forum.model.entity.User;
 import com.yunhang.forum.model.session.UserSession;
 import com.yunhang.forum.service.strategy.PostService;
 import com.yunhang.forum.util.TaskRunner;
+import com.yunhang.forum.util.ViewManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
@@ -43,6 +44,12 @@ public class PostDetailController {
     public void initData(Post post) {
         this.currentPost = post;
         if (post == null) return;
+
+        // NEW: view count tracking + persistence
+        TaskRunner.runAsync(() -> {
+            PostService.getInstance().incrementView(post.getPostId());
+        });
+
         titleLabel.setText(post.getTitle());
         authorLabel.setText(post.getDisplayAuthor());
         timeLabel.setText(post.getFormattedPublishTime());
@@ -82,7 +89,11 @@ public class PostDetailController {
 
         TaskRunner.runAsync(() -> {
             PostService.LikeResult result = PostService.getInstance().toggleLike(postId, userId);
-            TaskRunner.runOnUI(() -> applyLikeUI(result.likeCount(), result.liked()));
+            TaskRunner.runOnUI(() -> {
+                applyLikeUI(result.likeCount(), result.liked());
+                // NEW: refresh notifications panel if MyPosts currently visible
+                ViewManager.refreshMyPostsIfVisible();
+            });
         });
     }
 
@@ -131,6 +142,8 @@ public class PostDetailController {
                 if (saved != null) {
                     commentInput.clear();
                     commentsContainer.getChildren().add(buildCommentNode(saved));
+                    // NEW: refresh notifications panel if MyPosts currently visible
+                    ViewManager.refreshMyPostsIfVisible();
                 } else {
                     new Alert(Alert.AlertType.ERROR, "发送失败，请稍后再试").showAndWait();
                 }

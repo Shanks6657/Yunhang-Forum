@@ -20,6 +20,7 @@ public final class ResourcePaths {
 
   // -------- Main --------
   public static final String FXML_MAIN_LAYOUT = FXML_PREFIX + "auth/main/MainLayout.fxml";
+  public static final String FXML_MAIN_MY_POSTS = FXML_PREFIX + "auth/main/MyPosts.fxml";
 
   // -------- Post --------
   public static final String FXML_POST_EDITOR = FXML_PREFIX + "post/PostEditor.fxml";

@@ -42,7 +42,9 @@ public class LoginController {
         if (userService.login(studentId, password)) {
             messageLabel.getStyleClass().removeAll("error", "success");
             messageLabel.setText("登录成功");
-            ViewManager.switchScene(ResourcePaths.FXML_AUTH_USER_PROFILE);
+
+            // IMPORTANT: enter the main shell (MainLayout with sidebar/header)
+            ViewManager.switchScene(ResourcePaths.FXML_MAIN_LAYOUT);
 
         } else {
             setMessage("学号或密码错误", false);

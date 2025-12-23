@@ -1,12 +1,15 @@
 package com.yunhang.forum.util;
 
+import com.yunhang.forum.controller.post.PostDetailController;
+import com.yunhang.forum.model.entity.Post;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+
 import java.io.IOException;
-import java.net.URL; // 引入 URL
+import java.net.URL;
 import java.util.Objects;
 
 /**
@@ -24,29 +27,49 @@ public final class ViewManager {
     // 默认的 CSS 资源路径前缀
     private static final String CSS_STYLE = ResourcePaths.CSS_STYLE; // 假定所有场景都使用这个CSS
 
-    private ViewManager() {} // 阻止实例化
+    private ViewManager() {}
 
     public static void setMainLayout(BorderPane layout) {
         mainLayout = layout;
+    }
+
+    public static BorderPane getMainLayout() {
+        return mainLayout;
     }
 
     public static void setPrimaryStage(Stage stage) {
         primaryStage = stage;
     }
 
+    public static Stage getPrimaryStage() {
+        return primaryStage;
+    }
+
     // 辅助方法：统一资源查找和错误处理
     private static Parent loadFxmlResource(String fxmlPath) throws IOException {
         Objects.requireNonNull(fxmlPath, "fxmlPath");
 
+        FXMLLoader loader = createLoader(fxmlPath);
+        Parent root = loader.load();
+
+        // Store controller for callers that need to trigger refresh hooks.
+        Object controller = loader.getController();
+        if (controller != null) {
+            root.setUserData(controller);
+        }
+
+        return root;
+    }
+
+    private static FXMLLoader createLoader(String fxmlPath) throws IOException {
+        Objects.requireNonNull(fxmlPath, "fxmlPath");
         String fullPath = normalizeFxmlPath(fxmlPath);
         URL resourceUrl = ViewManager.class.getResource(fullPath);
-
         if (resourceUrl == null) {
             LogUtil.warn("资源未找到! 尝试路径: " + fullPath);
             throw new IOException("FXML resource not found: " + fullPath);
         }
-
-        return FXMLLoader.load(resourceUrl);
+        return new FXMLLoader(resourceUrl);
     }
 
     /**
@@ -78,9 +101,8 @@ public final class ViewManager {
 
 
     /**
-     * 【重要】在主窗口内部加载内容到 BorderPane 的 Center 区域
-     * 适用于：主界面内部的导航切换
-     * @param fxmlPath 相对于 FXML_PATH_PREFIX 的路径 (如 "main/dashboard.fxml")
+     * 【重要】在主窗口内部加载内容到 BorderPane 的 Center 区域。
+     * 绝对不要在这里切 Scene，否则会导致 MainLayout(sidebar/header) 消失。
      */
     public static void loadContent(String fxmlPath) {
         Objects.requireNonNull(mainLayout, "mainLayout is not initialized. Call setMainLayout() first.");
@@ -92,6 +114,30 @@ public final class ViewManager {
         } catch (IOException e) {
             LogUtil.error("Failed to load FXML content: " + fxmlPath, e);
             throw new RuntimeException("Failed to load FXML: " + fxmlPath, e);
+        }
+    }
+
+    /**
+     * 详情页路由：加载 PostDetail.fxml 并把 Post 注入 controller。
+     * 用于列表点击进入详情。
+     */
+    public static void showPostDetail(Post post) {
+        Objects.requireNonNull(mainLayout, "mainLayout is not initialized. Call setMainLayout() first.");
+        if (post == null) {
+            return;
+        }
+
+        try {
+            FXMLLoader loader = createLoader(ResourcePaths.FXML_POST_DETAIL);
+            Parent root = loader.load();
+            PostDetailController controller = loader.getController();
+            if (controller != null) {
+                controller.initData(post);
+            }
+            mainLayout.setCenter(root);
+        } catch (IOException e) {
+            LogUtil.error("Failed to load post detail: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to show post detail", e);
         }
     }
 
@@ -133,32 +179,39 @@ public final class ViewManager {
      * @param fxmlPath 相对于 FXML_PATH_PREFIX 的路径 (如 "auth/Register.fxml")
      */
     public static void switchScene(String fxmlPath) {
-        // 报错行 1: 确认 primaryStage 已设置
         Objects.requireNonNull(primaryStage, "primaryStage is not initialized. Call setPrimaryStage() first.");
 
         try {
-            // 1. 加载 FXML
-            Parent root = loadFxmlResource(fxmlPath);
+            FXMLLoader loader = createLoader(fxmlPath);
+            Parent root = loader.load();
 
-            // 2. 创建 Scene
+            // If entering main shell, capture the BorderPane so loadContent works.
+            if (ResourcePaths.FXML_MAIN_LAYOUT.equals(fxmlPath)) {
+                if (root instanceof BorderPane bp) {
+                    setMainLayout(bp);
+                }
+            }
+
             Scene scene = new Scene(root);
 
-            // 3. 尝试加载 CSS
             String cssUrl = getCssUrl();
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl);
             }
 
-            // 4. 设置和显示 Stage
             primaryStage.setScene(scene);
-            primaryStage.sizeToScene(); // 调整窗口大小以适应新内容
-            primaryStage.centerOnScreen(); // 居中显示
-            // primaryStage.show(); // 首次 show() 已经在 MainApp 中完成，这里可以省略，但保留也无妨
+            if (primaryStage.getWidth() <= 0 || primaryStage.getHeight() <= 0) {
+                primaryStage.sizeToScene();
+            }
+            primaryStage.centerOnScreen();
+
+            // Default landing: once main layout is ready, show the feed in center.
+            if (ResourcePaths.FXML_MAIN_LAYOUT.equals(fxmlPath)) {
+                TaskRunner.runOnUI(() -> loadContent(ResourcePaths.FXML_AUTH_POST_LIST));
+            }
 
         } catch (IOException e) {
-            // 如果 FXML 路径错误或内容有误，会捕获到 IOException
             LogUtil.error("Failed to load FXML scene: " + fxmlPath, e);
-            // 抛出运行时异常，但现在 FXML 路径错误会更早被 loadFxmlResource 捕获
             throw new RuntimeException("Failed to load scene: " + fxmlPath, e);
         }
     }
@@ -167,5 +220,18 @@ public final class ViewManager {
     public static void showLoginWindow() {
         switchScene(ResourcePaths.FXML_AUTH_LOGIN);
     }
-}
 
+    /**
+     * If the current center view is MyPosts, trigger its refresh hook.
+     * This helps keep notifications in sync after like/comment actions.
+     */
+    public static void refreshMyPostsIfVisible() {
+        if (mainLayout == null) {
+            return;
+        }
+        javafx.scene.Node center = mainLayout.getCenter();
+        if (center != null && center.getUserData() instanceof com.yunhang.forum.controller.main.MyPostsController c) {
+            c.refreshData();
+        }
+    }
+}

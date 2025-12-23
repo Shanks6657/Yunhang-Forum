@@ -30,9 +30,18 @@ public abstract class ObservableEntity {
         if (event == null) {
             return;
         }
+        Notification notification = Notification.fromEvent(event);
         for (User user : observers) {
-            Notification notification = Notification.fromEvent(event);
-            user.addNotification(notification);
+            if (user == null) {
+                continue;
+            }
+            // IMPORTANT: write to the canonical in-memory user instance (keyed by studentID)
+            User canonical = GlobalVariables.userMap.get(user.getStudentID());
+            if (canonical != null) {
+                canonical.addNotification(notification);
+            } else {
+                user.addNotification(notification);
+            }
         }
     }
 }
